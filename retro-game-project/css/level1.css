@@ -1,0 +1,38 @@
+body {
+    background-color: #87CEEB; /* Sky blue for the beach */
+    font-family: 'Press Start 2P', cursive; /* Retro font */
+}
+
+#court {
+    width: 800px;
+    height: 400px;
+    border: 5px solid #FFF; /* White court lines */
+    background-color: #F0E68C; /* Sandy color for the court */
+    position: relative;
+    margin: 0 auto;
+}
+
+.player {
+    width: 50px;
+    height: 100px;
+    background-color: #FF4500; /* Orange for player */
+    position: absolute;
+    bottom: 0;
+}
+
+.ball {
+    width: 30px;
+    height: 30px;
+    background-color: #FFFFFF; /* White ball */
+    border-radius: 50%; /* Make it round */
+    position: absolute;
+}
+
+.scoreboard {
+    font-size: 24px;
+    color: #000; /* Black for scoreboard text */
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
