@@ -20,7 +20,6 @@ class KartingGame extends BaseGame {
         this.track = [];
         this.obstacles = [];
         this.powerUps = [];
-        this.items = [];
         this.particles = [];
         this.checkpoints = [];
         this.raceCircuit = [];
@@ -34,12 +33,10 @@ class KartingGame extends BaseGame {
         this.raceFinished = false;
         this.finalPositions = [];
         
-        // Caméra et affichage
+        // Caméra
         this.camera = { x: 0, y: 0 };
-        this.trackWidth = 1400;
-        this.trackHeight = 1000;
-        this.viewportWidth = this.canvas.width;
-        this.viewportHeight = this.canvas.height;
+        this.trackWidth = 1000;
+        this.trackHeight = 800;
         
         this.initRace();
     }
@@ -55,174 +52,124 @@ class KartingGame extends BaseGame {
     }
 
     createCircuit() {
-        // Circuit style Mario Kart avec virages et sections
-        const centerX = this.trackWidth / 2;
-        const centerY = this.trackHeight / 2;
-        const trackRadius = 300;
-        const trackWidth = 120;
+        // Circuit façon Mario Kart - plus complexe et fun
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
         
-        // Points du circuit principal (ovale avec chicanes)
+        // Points du circuit avec des courbes plus intéressantes
         this.raceCircuit = [
-            { x: centerX - 400, y: centerY, angle: Math.PI },
-            { x: centerX - 350, y: centerY - 250, angle: -Math.PI/2 },
-            { x: centerX - 100, y: centerY - 300, angle: 0 },
-            { x: centerX + 200, y: centerY - 250, angle: Math.PI/4 },
-            { x: centerX + 350, y: centerY - 100, angle: Math.PI/2 },
-            { x: centerX + 400, y: centerY + 100, angle: Math.PI/2 },
-            { x: centerX + 300, y: centerY + 250, angle: Math.PI },
-            { x: centerX + 100, y: centerY + 300, angle: Math.PI },
-            { x: centerX - 200, y: centerY + 250, angle: -Math.PI/2 },
-            { x: centerX - 350, y: centerY + 100, angle: -Math.PI/2 }
+            { x: 150, y: 280 }, // Start/Finish
+            { x: 200, y: 150 }, // Premier virage
+            { x: 400, y: 100 }, // Ligne droite haute
+            { x: 650, y: 150 }, // Virage serré
+            { x: 700, y: 300 }, // Descente
+            { x: 650, y: 450 }, // Virage bas
+            { x: 400, y: 500 }, // Ligne droite basse
+            { x: 200, y: 450 }, // Retour
+            { x: 150, y: 350 }  // Approche finale
         ];
         
-        // Générer les murs du circuit
-        this.track = [];
-        for (let i = 0; i < this.raceCircuit.length; i++) {
-            const current = this.raceCircuit[i];
-            const next = this.raceCircuit[(i + 1) % this.raceCircuit.length];
+        // Créer les murs du circuit
+        this.track = [
+            // Bordures extérieures
+            { x: 30, y: 30, width: this.canvas.width - 60, height: 15, type: 'wall' },
+            { x: 30, y: this.canvas.height - 45, width: this.canvas.width - 60, height: 15, type: 'wall' },
+            { x: 30, y: 30, width: 15, height: this.canvas.height - 60, type: 'wall' },
+            { x: this.canvas.width - 45, y: 30, width: 15, height: this.canvas.height - 60, type: 'wall' },
             
-            // Murs intérieurs et extérieurs
-            const angle = Math.atan2(next.y - current.y, next.x - current.x);
-            const perpAngle = angle + Math.PI / 2;
+            // Obstacles du circuit
+            { x: 320, y: 120, width: 80, height: 15, type: 'wall' },
+            { x: 500, y: 120, width: 15, height: 80, type: 'wall' },
+            { x: 320, y: 460, width: 80, height: 15, type: 'wall' },
+            { x: 180, y: 350, width: 15, height: 80, type: 'wall' },
             
-            const innerRadius = trackWidth / 2 - 20;
-            const outerRadius = trackWidth / 2 + 20;
-            
-            // Mur intérieur
-            this.track.push({
-                x: current.x + Math.cos(perpAngle) * innerRadius,
-                y: current.y + Math.sin(perpAngle) * innerRadius,
-                width: 15,
-                height: 15,
-                type: 'inner_wall'
-            });
-            
-            // Mur extérieur
-            this.track.push({
-                x: current.x - Math.cos(perpAngle) * outerRadius,
-                y: current.y - Math.sin(perpAngle) * outerRadius,
-                width: 15,
-                height: 15,
-                type: 'outer_wall'
-            });
-        }
+            // Chicanes pour rendre la course plus technique
+            { x: 250, y: 200, width: 20, height: 40, type: 'chicane' },
+            { x: 280, y: 240, width: 20, height: 40, type: 'chicane' },
+            { x: 550, y: 350, width: 20, height: 40, type: 'chicane' },
+            { x: 520, y: 390, width: 20, height: 40, type: 'chicane' }
+        ];
     }
 
     createCheckpoints() {
-        this.checkpoints = [];
-        const numCheckpoints = 8;
-        
-        for (let i = 0; i < numCheckpoints; i++) {
-            const circuitIndex = Math.floor((i / numCheckpoints) * this.raceCircuit.length);
-            const point = this.raceCircuit[circuitIndex];
-            
-            this.checkpoints.push({
-                x: point.x - 15,
-                y: point.y - 15,
-                width: 30,
-                height: 30,
-                index: i,
-                passed: false
-            });
-        }
+        // Checkpoints mieux positionnés sur le nouveau circuit
+        this.checkpoints = [
+            { x: 180, y: 140, width: 60, height: 20, index: 0 }, // Après premier virage
+            { x: 450, y: 80, width: 60, height: 20, index: 1 },  // Ligne droite haute
+            { x: 680, y: 280, width: 20, height: 60, index: 2 }, // Virage serré
+            { x: 450, y: 480, width: 60, height: 20, index: 3 }, // Ligne droite basse
+            { x: 180, y: 360, width: 20, height: 60, index: 4 }, // Avant ligne d'arrivée
+            { x: 120, y: 260, width: 60, height: 40, index: 5 }  // Ligne d'arrivée
+        ];
     }
 
     createOpponents() {
         const opponentData = [
-            { name: 'BOWSER', color: '#8B4513', ai: 'aggressive', speed: 0.9 },
-            { name: 'PEACH', color: '#FFB6C1', ai: 'balanced', speed: 1.0 },
-            { name: 'YOSHI', color: '#32CD32', ai: 'defensive', speed: 1.1 }
+            { name: 'BOWSER', color: '#8B4513', skill: 0.8, aggression: 0.9 },
+            { name: 'PEACH', color: '#FFB6C1', skill: 0.7, aggression: 0.3 },
+            { name: 'YOSHI', color: '#32CD32', skill: 0.9, aggression: 0.6 },
+            { name: 'LUIGI', color: '#00AA00', skill: 0.6, aggression: 0.4 }
         ];
         
         this.opponents = [];
         for (let i = 0; i < this.numOpponents; i++) {
             const data = opponentData[i];
-            const startOffset = (i + 1) * 35;
             
             this.opponents.push({
-                x: 150 - startOffset, y: 280 + (i * 20), width: 28, height: 16,
+                x: 120 - (i * 30), y: 280 + (i * 25), width: 28, height: 16,
                 vx: 0, vy: 0, angle: 0, speed: 0,
-                maxSpeed: 11 * data.speed, acceleration: 0.35, friction: 0.92,
+                maxSpeed: 8 + data.skill * 4, 
+                acceleration: 0.3 + data.skill * 0.2, 
+                friction: 0.92,
                 color: data.color, name: data.name, trail: [],
                 boost: 0, shield: 0, lap: 1, checkpointIndex: 0,
-                lapTime: 0, bestLap: Infinity, position: i + 2,
+                position: i + 2,
+                skill: data.skill,
+                aggression: data.aggression,
                 ai: {
-                    type: data.ai,
                     targetX: 150, targetY: 280,
                     decisionTimer: 0,
+                    pathOffset: (Math.random() - 0.5) * 40, // Variation dans la trajectoire
+                    overtakeTimer: 0,
                     stuck: 0,
-                    lastX: 150 - startOffset,
-                    lastY: 280 + (i * 20)
+                    lastPos: { x: 0, y: 0 }
                 }
             });
         }
     }
 
     createPowerUps() {
-        this.powerUps = [];
-        const powerUpTypes = [
-            { type: 'speed_boost', color: '#FFD700', effect: 60 },
-            { type: 'shield', color: '#00CED1', effect: 120 },
-            { type: 'missile', color: '#FF6347', effect: 1 },
-            { type: 'banana', color: '#FFFF00', effect: 1 }
+        this.powerUps = [
+            // Power-ups stratégiquement placés
+            { x: 220, y: 180, width: 20, height: 20, type: 'boost', color: '#FFD700', collected: false, pulse: 0, respawnTime: 0 },
+            { x: 480, y: 130, width: 20, height: 20, type: 'lightning', color: '#FFFF00', collected: false, pulse: 0, respawnTime: 0 },
+            { x: 650, y: 320, width: 20, height: 20, type: 'shell', color: '#FF0000', collected: false, pulse: 0, respawnTime: 0 },
+            { x: 480, y: 450, width: 20, height: 20, type: 'boost', color: '#FFD700', collected: false, pulse: 0, respawnTime: 0 },
+            { x: 250, y: 380, width: 20, height: 20, type: 'shield', color: '#00CED1', collected: false, pulse: 0, respawnTime: 0 },
+            { x: 580, y: 250, width: 20, height: 20, type: 'star', color: '#FFB6C1', collected: false, pulse: 0, respawnTime: 0 }
         ];
-        
-        // Placer des power-ups le long du circuit
-        for (let i = 0; i < 12; i++) {
-            const circuitIndex = Math.floor((i / 12) * this.raceCircuit.length);
-            const point = this.raceCircuit[circuitIndex];
-            const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
-            
-            this.powerUps.push({
-                x: point.x + (Math.random() - 0.5) * 60,
-                y: point.y + (Math.random() - 0.5) * 60,
-                width: 20, height: 20,
-                type: type.type,
-                color: type.color,
-                effect: type.effect,
-                collected: false,
-                respawnTime: 0,
-                pulse: 0
-            });
-        }
     }
 
     createObstacles() {
-        this.obstacles = [];
-        // Quelques obstacles fixes sur le circuit
-        const numObstacles = 6;
-        
-        for (let i = 0; i < numObstacles; i++) {
-            const circuitIndex = Math.floor((i / numObstacles) * this.raceCircuit.length);
-            const point = this.raceCircuit[circuitIndex];
+        this.obstacles = [
+            // Cônes et obstacles dynamiques
+            { x: 280, y: 160, width: 12, height: 12, type: 'cone', color: '#FF8C00', rotation: 0 },
+            { x: 420, y: 200, width: 12, height: 12, type: 'cone', color: '#FF8C00', rotation: 0 },
+            { x: 580, y: 380, width: 12, height: 12, type: 'cone', color: '#FF8C00', rotation: 0 },
+            { x: 350, y: 420, width: 12, height: 12, type: 'cone', color: '#FF8C00', rotation: 0 },
             
-            this.obstacles.push({
-                x: point.x + (Math.random() - 0.5) * 40,
-                y: point.y + (Math.random() - 0.5) * 40,
-                width: 20, height: 20,
-                type: 'barrel',
-                color: '#8B4513',
-                health: 1
-            });
-        }
+            // Barils roulants
+            { x: 500, y: 180, width: 16, height: 16, type: 'barrel', color: '#8B4513', vx: -1, vy: 0, rotation: 0 },
+            { x: 300, y: 400, width: 16, height: 16, type: 'barrel', color: '#8B4513', vx: 1, vy: 0, rotation: 0 },
+            
+            // Flaques d'huile
+            { x: 240, y: 300, width: 25, height: 15, type: 'oil', color: '#333333', slipFactor: 0.5 },
+            { x: 520, y: 200, width: 25, height: 15, type: 'oil', color: '#333333', slipFactor: 0.5 }
+        ];
     }
 
     createAmbientParticles() {
         this.particles = [];
-        // Particules d'ambiance (poussière, fumée)
-        for (let i = 0; i < 40; i++) {
-            this.particles.push({
-                x: Math.random() * this.trackWidth,
-                y: Math.random() * this.trackHeight,
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2,
-                size: Math.random() * 3 + 1,
-                color: `rgba(${200 + Math.random() * 55}, ${200 + Math.random() * 55}, ${180 + Math.random() * 75}, 0.3)`,
-                type: 'ambient',
-                life: Math.random() * 200 + 100,
-                maxLife: 300
-            });
-        }
     }
 
     startCountdown() {
@@ -286,22 +233,18 @@ class KartingGame extends BaseGame {
         this.checkRaceFinished();
     }
 
+    updateFinished(deltaTime) {
+        // Animation de fin
+    }
+
     updatePlayer(deltaTime) {
-        // Contrôles du joueur
         this.handlePlayerInput();
-        
-        // Physique
-        this.updateKartPhysics(this.player, deltaTime);
-        
-        // Collisions
+        this.updateKartPhysics(this.player);
         this.checkCollisions(this.player);
-        
-        // Checkpoints
         this.checkCheckpoints(this.player);
     }
 
     handlePlayerInput() {
-        // Accélération/freinage
         if (this.controls.isPressed('up')) {
             this.player.speed = Math.min(this.player.speed + this.player.acceleration, this.player.maxSpeed);
         } else if (this.controls.isPressed('down')) {
@@ -310,630 +253,855 @@ class KartingGame extends BaseGame {
             this.player.speed *= this.player.friction;
         }
         
-        // Direction
         if (this.controls.isPressed('left') && Math.abs(this.player.speed) > 0.5) {
-            this.player.angle -= 0.08 * (Math.abs(this.player.speed) / this.player.maxSpeed);
+            this.player.angle -= 0.08;
         }
         if (this.controls.isPressed('right') && Math.abs(this.player.speed) > 0.5) {
-            this.player.angle += 0.08 * (Math.abs(this.player.speed) / this.player.maxSpeed);
+            this.player.angle += 0.08;
         }
         
-        // Utilisation d'objets
         if (this.controls.isPressed('action') && this.player.boost > 0) {
-            this.usePlayerItem();
-        }
-    }
-
-    usePlayerItem() {
-        if (this.player.boost > 0) {
             this.player.boost -= 1;
             this.player.speed = Math.min(this.player.speed + 0.5, this.player.maxSpeed * 1.4);
-            this.createBoostParticles(this.player);
         }
     }
 
     updateOpponents(deltaTime) {
         this.opponents.forEach(opponent => {
-            this.updateOpponentAI(opponent, deltaTime);
-            this.updateKartPhysics(opponent, deltaTime);
+            this.updateOpponentAI(opponent);
+            this.updateKartPhysics(opponent);
             this.checkCollisions(opponent);
             this.checkCheckpoints(opponent);
         });
     }
 
-    updateOpponentAI(opponent, deltaTime) {
-        const ai = opponent.ai;
-        ai.decisionTimer += deltaTime;
+    updateOpponentAI(opponent) {
+        // IA améliorée façon Mario Kart
+        const checkpoint = this.checkpoints[opponent.checkpointIndex];
+        if (!checkpoint) return;
         
-        // Mise à jour de la cible IA toutes les 200ms
-        if (ai.decisionTimer > 200) {
-            ai.decisionTimer = 0;
-            this.updateAITarget(opponent);
+        // Calcul de la trajectoire optimale avec offset personnel
+        let targetX = checkpoint.x + checkpoint.width/2 + opponent.ai.pathOffset;
+        let targetY = checkpoint.y + checkpoint.height/2;
+        
+        // Évitement d'obstacles
+        this.obstacles.forEach(obstacle => {
+            const dx = obstacle.x - opponent.x;
+            const dy = obstacle.y - opponent.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < 60) {
+                // Dévier la trajectoire pour éviter l'obstacle
+                targetX += (dx > 0 ? -30 : 30);
+                targetY += (dy > 0 ? -30 : 30);
+            }
+        });
+        
+        // Logique de dépassement
+        if (opponent.ai.overtakeTimer > 0) {
+            opponent.ai.overtakeTimer--;
+            targetX += opponent.ai.pathOffset * 2; // Trajectoire plus agressive
         }
         
-        // Mouvement vers la cible
-        const dx = ai.targetX - opponent.x;
-        const dy = ai.targetY - opponent.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Détection de blocage
+        const distFromLastPos = Math.sqrt(
+            Math.pow(opponent.x - opponent.ai.lastPos.x, 2) + 
+            Math.pow(opponent.y - opponent.ai.lastPos.y, 2)
+        );
+        
+        if (distFromLastPos < 2 && opponent.speed > 0) {
+            opponent.ai.stuck++;
+            if (opponent.ai.stuck > 30) {
+                // Manœuvre de déblocage
+                targetX += (Math.random() - 0.5) * 100;
+                targetY += (Math.random() - 0.5) * 100;
+                opponent.ai.stuck = 0;
+            }
+        } else {
+            opponent.ai.stuck = 0;
+        }
+        
+        opponent.ai.lastPos = { x: opponent.x, y: opponent.y };
+        
+        // Calcul de l'angle de direction
+        const dx = targetX - opponent.x;
+        const dy = targetY - opponent.y;
         const targetAngle = Math.atan2(dy, dx);
         
-        // Ajuster l'angle progressivement
+        // Ajustement de l'angle avec intelligence variable
         let angleDiff = targetAngle - opponent.angle;
         while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
         while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
         
-        const turnSpeed = 0.06;
+        const turnRate = 0.04 + opponent.skill * 0.03;
         if (Math.abs(angleDiff) > 0.1) {
             if (angleDiff > 0) {
-                opponent.angle += turnSpeed;
+                opponent.angle += turnRate;
             } else {
-                opponent.angle -= turnSpeed;
+                opponent.angle -= turnRate;
             }
         }
         
-        // Vitesse basée sur la distance et le type d'IA
+        // Gestion de la vitesse selon la situation
+        const distanceToTarget = Math.sqrt(dx*dx + dy*dy);
         let targetSpeed = opponent.maxSpeed;
         
-        if (distance < 50) {
-            targetSpeed *= 0.7; // Ralentir près de la cible
+        // Ralentir dans les virages serrés
+        if (Math.abs(angleDiff) > 0.5) {
+            targetSpeed *= 0.7;
         }
         
-        if (ai.type === 'aggressive') {
-            targetSpeed *= 1.1;
-        } else if (ai.type === 'defensive') {
-            targetSpeed *= 0.9;
+        // Utilisation des power-ups par l'IA
+        if (opponent.boost > 0 && Math.random() < 0.1) {
+            opponent.boost -= 5;
+            targetSpeed *= 1.3;
         }
         
-        // Ajuster la vitesse
+        // Accélération progressive
         if (opponent.speed < targetSpeed) {
             opponent.speed = Math.min(opponent.speed + opponent.acceleration, targetSpeed);
         } else {
-            opponent.speed = Math.max(opponent.speed - opponent.acceleration, targetSpeed * 0.5);
+            opponent.speed = Math.max(opponent.speed - opponent.acceleration * 0.5, targetSpeed);
         }
         
-        // Détection de blocage
-        const moveDistance = Math.sqrt(
-            (opponent.x - ai.lastX) ** 2 + (opponent.y - ai.lastY) ** 2
-        );
-        
-        if (moveDistance < 2 && opponent.speed > 2) {
-            ai.stuck += deltaTime;
-            if (ai.stuck > 1000) {
-                // Déblocage : reculer et tourner
-                opponent.speed = -opponent.maxSpeed * 0.3;
-                opponent.angle += (Math.random() - 0.5) * 0.5;
-                ai.stuck = 0;
-            }
-        } else {
-            ai.stuck = 0;
-        }
-        
-        ai.lastX = opponent.x;
-        ai.lastY = opponent.y;
-        
-        // Utilisation d'objets IA
-        if (Math.random() < 0.001 && opponent.boost > 0) {
-            opponent.boost -= 1;
-            opponent.speed = Math.min(opponent.speed + 0.4, opponent.maxSpeed * 1.3);
-            this.createBoostParticles(opponent);
+        // Comportement agressif pour les personnages comme Bowser
+        if (opponent.aggression > 0.7 && Math.random() < 0.05) {
+            opponent.ai.overtakeTimer = 60;
         }
     }
 
-    updateAITarget(opponent) {
-        // L'IA vise le prochain checkpoint
-        const nextCheckpointIndex = (opponent.checkpointIndex + 1) % this.checkpoints.length;
-        const checkpoint = this.checkpoints[nextCheckpointIndex];
+    updateKartPhysics(kart) {
+        // Réduction temporaire des effets de statut
+        if (kart.boost > 0) kart.boost--;
+        if (kart.shield > 0) kart.shield--;
+        if (kart.lightning > 0) kart.lightning--;
+        if (kart.star > 0) kart.star--;
         
-        if (checkpoint) {
-            // Ajouter de la variation pour éviter que tous les karts suivent exactement la même ligne
-            const variation = 30;
-            opponent.ai.targetX = checkpoint.x + (Math.random() - 0.5) * variation;
-            opponent.ai.targetY = checkpoint.y + (Math.random() - 0.5) * variation;
+        // Application de la physique
+        kart.vx = Math.cos(kart.angle) * kart.speed;
+        kart.vy = Math.sin(kart.angle) * kart.speed;
+        
+        kart.x += kart.vx;
+        kart.y += kart.vy;
+        
+        // Effet de l'huile sur la friction
+        let currentFriction = kart.friction;
+        this.obstacles.forEach(obstacle => {
+            if (obstacle.type === 'oil' &&
+                kart.x < obstacle.x + obstacle.width && 
+                kart.x + kart.width > obstacle.x &&
+                kart.y < obstacle.y + obstacle.height && 
+                kart.y + kart.height > obstacle.y) {
+                currentFriction = 0.98; // Moins de friction sur l'huile
+            }
+        });
+        
+        // Effet éclair
+        if (kart.lightning > 0) {
+            kart.speed *= 0.95; // Ralentissement progressif
         }
+        
+        // Trail amélioré
+        kart.trail.push({ 
+            x: kart.x + kart.width/2, 
+            y: kart.y + kart.height/2, 
+            life: 20,
+            boost: kart.boost > 0,
+            star: kart.star > 0
+        });
+        
+        if (kart.trail.length > 8) kart.trail.shift();
+        
+        kart.trail.forEach(point => point.life--);
+        kart.trail = kart.trail.filter(point => point.life > 0);
+        
+        // Garder le kart dans les limites du canvas
+        kart.x = Math.max(0, Math.min(kart.x, this.canvas.width - kart.width));
+        kart.y = Math.max(0, Math.min(kart.y, this.canvas.height - kart.height));
     }
+
+    checkCollisions(kart) {
+        // Collision avec les murs
+        this.track.forEach(wall => {
+            if (kart.x < wall.x + wall.width && 
+                kart.x + kart.width > wall.x &&
+                kart.y < wall.y + wall.height && 
+                kart.y + kart.height > wall.y) {
+                
+                // Rebond plus réaliste
+                kart.x -= kart.vx * 1.5;
+                kart.y -= kart.vy * 1.5;
+                kart.speed *= -0.4;
+                
+                // Effet visuel de collision
+                this.createCollisionEffect(kart.x, kart.y);
+            }
         });
 
         // Collision avec obstacles
         this.obstacles.forEach(obstacle => {
-            if (this.kart.x < obstacle.x + obstacle.width && 
-                this.kart.x + this.kart.width > obstacle.x &&
-                this.kart.y < obstacle.y + obstacle.height && 
-                this.kart.y + this.kart.height > obstacle.y) {
+            if (kart.x < obstacle.x + obstacle.width && 
+                kart.x + kart.width > obstacle.x &&
+                kart.y < obstacle.y + obstacle.height && 
+                kart.y + kart.height > obstacle.y) {
                 
                 if (obstacle.type === 'oil') {
-                    // Glissement sur l'huile
-                    this.kart.speed *= 0.5;
-                    this.kart.angle += (Math.random() - 0.5) * 0.3;
-                } else if (obstacle.type === 'cone') {
-                    // Ralentissement sur cône
-                    this.kart.speed *= 0.7;
-                    this.createCollisionParticles();
-                }
-            }
-        });
-    }
-
-    updatePowerUps() {
-        this.powerUps.forEach(powerUp => {
-            if (!powerUp.collected) {
-                powerUp.pulse += 0.1;
-                
-                // Collision avec le kart
-                if (this.kart.x < powerUp.x + powerUp.width && 
-                    this.kart.x + this.kart.width > powerUp.x &&
-                    this.kart.y < powerUp.y + powerUp.height && 
-                    this.kart.y + this.kart.height > powerUp.y) {
+                    // Effet de glisse sur l'huile
+                    kart.friction *= obstacle.slipFactor;
+                    kart.angle += (Math.random() - 0.5) * 0.3;
+                } else {
+                    // Collision normale
+                    kart.x -= kart.vx;
+                    kart.y -= kart.vy;
+                    kart.speed *= 0.3;
                     
-                    powerUp.collected = true;
-                    
-                    if (powerUp.type === 'boost') {
-                        this.kart.boost = 100;
-                        this.createPowerUpEffect(powerUp.x, powerUp.y, '#FFD700');
-                    } else if (powerUp.type === 'shield') {
-                        this.kart.shield = 200;
-                        this.createPowerUpEffect(powerUp.x, powerUp.y, '#00CED1');
+                    if (obstacle.type === 'barrel') {
+                        // Faire bouger le baril
+                        obstacle.vx = kart.vx * 0.5;
+                        obstacle.vy = kart.vy * 0.5;
                     }
                 }
             }
         });
-    }
 
-    updateParticles() {
-        this.particles.forEach((particle, index) => {
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            particle.life--;
-            
-            if (particle.type === 'ambient') {
-                particle.vy += 0.01; // Légère gravité
+        // Collision avec power-ups
+        this.powerUps.forEach(powerUp => {
+            if (!powerUp.collected &&
+                kart.x < powerUp.x + powerUp.width && 
+                kart.x + kart.width > powerUp.x &&
+                kart.y < powerUp.y + powerUp.height && 
+                kart.y + kart.height > powerUp.y) {
                 
-                // Recyclage des particules d'ambiance
-                if (particle.life <= 0) {
-                    particle.x = Math.random() * this.trackWidth;
-                    particle.y = Math.random() * this.trackHeight;
-                    particle.life = Math.random() * 200 + 100;
+                powerUp.collected = true;
+                this.createPickupEffect(powerUp.x, powerUp.y, powerUp.color);
+                
+                // Effets des différents power-ups
+                switch (powerUp.type) {
+                    case 'boost':
+                        kart.boost += 80;
+                        break;
+                    case 'shield':
+                        kart.shield = 180;
+                        break;
+                    case 'lightning':
+                        // Ralentir tous les autres karts
+                        this.applyLightningEffect(kart);
+                        break;
+                    case 'shell':
+                        kart.shell = true;
+                        break;
+                    case 'star':
+                        kart.star = 240; // Invincibilité temporaire
+                        break;
                 }
-            } else if (particle.life <= 0) {
-                this.particles.splice(index, 1);
+            }
+        });
+        
+        // Collision entre karts
+        const allKarts = [this.player, ...this.opponents];
+        allKarts.forEach(otherKart => {
+            if (otherKart !== kart && 
+                kart.x < otherKart.x + otherKart.width && 
+                kart.x + kart.width > otherKart.x &&
+                kart.y < otherKart.y + otherKart.height && 
+                kart.y + kart.height > otherKart.y) {
+                
+                // Échange d'impulsion entre karts
+                const tempVx = kart.vx;
+                const tempVy = kart.vy;
+                kart.vx = otherKart.vx * 0.5;
+                kart.vy = otherKart.vy * 0.5;
+                otherKart.vx = tempVx * 0.5;
+                otherKart.vy = tempVy * 0.5;
+                
+                // Séparation des karts
+                const dx = kart.x - otherKart.x;
+                const dy = kart.y - otherKart.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance > 0) {
+                    kart.x += (dx/distance) * 5;
+                    kart.y += (dy/distance) * 5;
+                    otherKart.x -= (dx/distance) * 5;
+                    otherKart.y -= (dy/distance) * 5;
+                }
             }
         });
     }
 
-    checkCheckpoints() {
-        const checkpoint = this.checkpoints[this.currentCheckpoint];
-        
-        if (this.kart.x < checkpoint.x + checkpoint.width && 
-            this.kart.x + this.kart.width > checkpoint.x &&
-            this.kart.y < checkpoint.y + checkpoint.height && 
-            this.kart.y + this.kart.height > checkpoint.y) {
+    createCollisionEffect(x, y) {
+        // Ajouter des étincelles de collision
+        for (let i = 0; i < 8; i++) {
+            this.particles.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 30,
+                color: '#FFA500',
+                size: 3
+            });
+        }
+    }
+
+    createPickupEffect(x, y, color) {
+        // Effet visuel de ramassage
+        for (let i = 0; i < 12; i++) {
+            this.particles.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 40,
+                color: color,
+                size: 4
+            });
+        }
+    }
+
+    applyLightningEffect(sourceKart) {
+        // Effet éclair : ralentir tous les autres karts
+        const allKarts = [this.player, ...this.opponents];
+        allKarts.forEach(kart => {
+            if (kart !== sourceKart && !kart.star) {
+                kart.speed *= 0.3;
+                kart.lightning = 120; // Durée de l'effet
+            }
+        });
+    }
+
+    updatePowerUps(deltaTime) {
+        this.powerUps.forEach(powerUp => {
+            powerUp.pulse += 0.1;
             
-            if (!checkpoint.passed) {
-                checkpoint.passed = true;
-                this.currentCheckpoint++;
-                
-                // Vérifier fin de tour
-                if (this.currentCheckpoint >= this.checkpoints.length) {
-                    this.completeLap();
+            // Gestion du respawn des power-ups
+            if (powerUp.collected) {
+                powerUp.respawnTime += deltaTime;
+                if (powerUp.respawnTime >= 3000) { // 3 secondes
+                    powerUp.collected = false;
+                    powerUp.respawnTime = 0;
                 }
+            }
+        });
+        
+        // Mise à jour des obstacles dynamiques
+        this.obstacles.forEach(obstacle => {
+            if (obstacle.type === 'barrel') {
+                obstacle.x += obstacle.vx;
+                obstacle.y += obstacle.vy;
+                obstacle.rotation += 0.1;
                 
-                this.createCheckpointEffect(checkpoint.x, checkpoint.y);
+                // Rebond sur les bords
+                if (obstacle.x < 50 || obstacle.x > this.canvas.width - 66) {
+                    obstacle.vx *= -1;
+                }
+                if (obstacle.y < 50 || obstacle.y > this.canvas.height - 66) {
+                    obstacle.vy *= -1;
+                }
+            }
+            
+            if (obstacle.type === 'cone') {
+                obstacle.rotation += 0.02;
+            }
+        });
+    }
+
+    checkCheckpoints(kart) {
+        const checkpoint = this.checkpoints[kart.checkpointIndex];
+        
+        if (checkpoint &&
+            kart.x < checkpoint.x + checkpoint.width && 
+            kart.x + kart.width > checkpoint.x &&
+            kart.y < checkpoint.y + checkpoint.height && 
+            kart.y + kart.height > checkpoint.y) {
+            
+            kart.checkpointIndex = (kart.checkpointIndex + 1) % this.checkpoints.length;
+            
+            if (kart.checkpointIndex === 0) {
+                kart.lap++;
+                if (kart.lap > this.totalLaps) {
+                    this.finishRace(kart);
+                }
             }
         }
     }
 
-    completeLap() {
-        const lapTime = Date.now() - this.lapStartTime;
-        this.lapTimes.push(lapTime);
-        
-        if (lapTime < this.bestLap) {
-            this.bestLap = lapTime;
+    finishRace(kart) {
+        if (!this.raceFinished) {
+            this.finalPositions.push({
+                name: kart.name,
+                time: this.raceTime,
+                position: this.finalPositions.length + 1
+            });
+            
+            if (kart === this.player) {
+                this.raceFinished = true;
+                this.raceState = 'finished';
+            }
         }
+    }
+
+    updatePositions() {
+        const allKarts = [this.player, ...this.opponents];
         
-        this.currentLap++;
-        this.currentCheckpoint = 0;
+        allKarts.sort((a, b) => {
+            if (a.lap !== b.lap) {
+                return b.lap - a.lap;
+            }
+            return b.checkpointIndex - a.checkpointIndex;
+        });
         
-        // Réinitialiser les checkpoints
-        this.checkpoints.forEach(cp => cp.passed = false);
+        allKarts.forEach((kart, index) => {
+            kart.position = index + 1;
+        });
+    }
+
+    checkRaceFinished() {
+        if (this.player.lap > this.totalLaps && !this.raceFinished) {
+            this.finishRace(this.player);
+        }
+    }
+
+    updateParticles(deltaTime) {
+        // Mise à jour des particules d'effets
+        this.particles.forEach(particle => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vx *= 0.98;
+            particle.vy *= 0.98;
+            particle.life--;
+            particle.size = Math.max(0, particle.size - 0.1);
+        });
         
-        // Vérifier fin de course
-        if (this.currentLap > this.totalLaps) {
-            this.endRace();
-        } else {
-            this.lapStartTime = Date.now();
+        this.particles = this.particles.filter(p => p.life > 0);
+        
+        // Ajouter des particules d'ambiance
+        if (Math.random() < 0.02) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: this.canvas.height + 10,
+                vx: (Math.random() - 0.5) * 2,
+                vy: -Math.random() * 3,
+                life: 100,
+                color: '#87CEEB',
+                size: 2
+            });
         }
     }
 
     updateCamera() {
-        // Caméra qui suit le kart avec lissage
-        const targetX = this.kart.x - this.canvas.width / 2;
-        const targetY = this.kart.y - this.canvas.height / 2;
-        
-        this.camera.x += (targetX - this.camera.x) * 0.1;
-        this.camera.y += (targetY - this.camera.y) * 0.1;
-        
-        // Limiter la caméra aux bords de la piste
-        this.camera.x = GameEngine.clamp(this.camera.x, 0, this.trackWidth - this.canvas.width);
-        this.camera.y = GameEngine.clamp(this.camera.y, 0, this.trackHeight - this.canvas.height);
-    }
-
-    createBoostParticles() {
-        for (let i = 0; i < 8; i++) {
-            this.particles.push({
-                x: this.kart.x - Math.cos(this.kart.angle) * 20,
-                y: this.kart.y - Math.sin(this.kart.angle) * 20,
-                vx: -Math.cos(this.kart.angle) * 5 + (Math.random() - 0.5) * 4,
-                vy: -Math.sin(this.kart.angle) * 5 + (Math.random() - 0.5) * 4,
-                size: Math.random() * 4 + 2,
-                color: `hsl(${30 + Math.random() * 30}, 80%, 60%)`,
-                type: 'boost',
-                life: 30,
-                maxLife: 30
-            });
-        }
-    }
-
-    createCollisionParticles() {
-        for (let i = 0; i < 6; i++) {
-            this.particles.push({
-                x: this.kart.x + this.kart.width/2,
-                y: this.kart.y + this.kart.height/2,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                size: Math.random() * 3 + 1,
-                color: '#FF6B6B',
-                type: 'collision',
-                life: 25,
-                maxLife: 25
-            });
-        }
-    }
-
-    createPowerUpEffect(x, y, color) {
-        for (let i = 0; i < 12; i++) {
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 10,
-                vy: (Math.random() - 0.5) * 10,
-                size: Math.random() * 5 + 2,
-                color: color,
-                type: 'powerup',
-                life: 40,
-                maxLife: 40
-            });
-        }
-    }
-
-    createCheckpointEffect(x, y) {
-        for (let i = 0; i < 15; i++) {
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
-                size: Math.random() * 4 + 1,
-                color: '#00FF00',
-                type: 'checkpoint',
-                life: 35,
-                maxLife: 35
-            });
-        }
-    }
-
-    endRace() {
-        this.gameRunning = false;
-        // Afficher les résultats
-        console.log('Course terminée !');
-        console.log(`Meilleur tour: ${this.formatTime(this.bestLap)}`);
-        console.log(`Temps total: ${this.formatTime(this.raceTime)}`);
+        // Caméra fixe pour simplicité
+        this.camera.x = 0;
+        this.camera.y = 0;
     }
 
     formatTime(ms) {
-        const minutes = Math.floor(ms / 60000);
-        const seconds = Math.floor((ms % 60000) / 1000);
-        const centiseconds = Math.floor((ms % 1000) / 10);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
     render() {
-        // Fond avec dégradé
-        this.drawGradientRect(0, 0, this.canvas.width, this.canvas.height, 
-            '#2F4F2F', '#1C3A1C', 'vertical');
+        // Arrière-plan dégradé
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, '#87CEEB');
+        gradient.addColorStop(1, '#228B22');
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Appliquer la translation de caméra
-        this.ctx.save();
-        this.ctx.translate(-this.camera.x, -this.camera.y);
+        // Circuit principal avec texture
+        this.ctx.fillStyle = '#404040';
+        this.ctx.fillRect(60, 60, this.canvas.width - 120, this.canvas.height - 120);
         
-        // Piste
-        this.drawTrack();
-        
-        // Obstacles
-        this.drawObstacles();
-        
-        // Power-ups
-        this.drawPowerUps();
-        
-        // Checkpoints
-        this.drawCheckpoints();
-        
-        // Particules
-        this.drawParticles();
-        
-        // Kart
-        this.drawKart();
-        
-        this.ctx.restore();
-        
-        // Interface (pas affectée par la caméra)
-        this.drawUI();
-        
-        // Mini-carte
-        this.drawMiniMap();
-    }
-
-    drawTrack() {
-        // Surface de course avec texture
-        this.ctx.fillStyle = '#696969';
-        this.ctx.fillRect(100, 80, 600, 440);
-        
-        // Lignes de circuit
-        this.ctx.strokeStyle = '#FFFFFF';
+        // Marquages de piste
+        this.ctx.strokeStyle = '#FFFF00';
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([10, 10]);
         this.ctx.beginPath();
-        this.ctx.moveTo(400, 100);
-        this.ctx.lineTo(400, 500);
+        this.ctx.moveTo(150, 100);
+        this.ctx.lineTo(650, 100);
+        this.ctx.moveTo(650, 500);
+        this.ctx.lineTo(150, 500);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
         
-        // Murs avec style 3D
+        // Murs avec ombres
         this.track.forEach(wall => {
-            // Ombre du mur
-            this.drawShadowRect(wall.x, wall.y, wall.width, wall.height, '#8B4513', 'rgba(0,0,0,0.4)');
+            // Ombre
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            this.ctx.fillRect(wall.x + 2, wall.y + 2, wall.width, wall.height);
+            
+            // Mur principal
+            if (wall.type === 'chicane') {
+                this.ctx.fillStyle = '#FF6347';
+            } else {
+                this.ctx.fillStyle = '#8B4513';
+            }
+            this.ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
         });
-    }
-
-    drawObstacles() {
-        this.obstacles.forEach(obstacle => {
-            if (obstacle.type === 'cone') {
-                // Cône en 3D
-                this.ctx.fillStyle = obstacle.color;
-                this.ctx.beginPath();
-                this.ctx.moveTo(obstacle.x + obstacle.width/2, obstacle.y);
-                this.ctx.lineTo(obstacle.x, obstacle.y + obstacle.height);
-                this.ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height);
-                this.ctx.closePath();
-                this.ctx.fill();
+        
+        // Ligne de départ/arrivée avec animation
+        this.ctx.fillStyle = '#FFFFFF';
+        const flash = Math.sin(this.time * 0.01) > 0;
+        for (let i = 0; i < 10; i++) {
+            this.ctx.fillStyle = (i % 2 === 0) ? '#FFFFFF' : (flash ? '#FF0000' : '#000000');
+            this.ctx.fillRect(100 + i * 12, 250, 10, 80);
+        }
+        
+        // Checkpoints avec indicateurs visuels
+        this.checkpoints.forEach((checkpoint, index) => {
+            const isPlayerNext = index === this.player.checkpointIndex;
+            const isOpponentNext = this.opponents.some(opp => index === opp.checkpointIndex);
+            
+            if (isPlayerNext) {
+                this.ctx.strokeStyle = '#00FF00';
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeRect(checkpoint.x - 2, checkpoint.y - 2, checkpoint.width + 4, checkpoint.height + 4);
                 
-                // Bande réfléchissante
-                this.ctx.fillStyle = '#FFFFFF';
-                this.ctx.fillRect(obstacle.x + 5, obstacle.y + obstacle.height - 5, 5, 3);
-            } else if (obstacle.type === 'oil') {
-                // Flaque d'huile avec reflets
-                this.ctx.fillStyle = obstacle.color;
+                // Flèche indicatrice
+                this.ctx.fillStyle = '#00FF00';
                 this.ctx.beginPath();
-                this.ctx.ellipse(obstacle.x + obstacle.width/2, obstacle.y + obstacle.height/2, 
-                    obstacle.width/2, obstacle.height/2, 0, 0, Math.PI * 2);
+                this.ctx.moveTo(checkpoint.x + checkpoint.width/2, checkpoint.y - 10);
+                this.ctx.lineTo(checkpoint.x + checkpoint.width/2 - 8, checkpoint.y - 20);
+                this.ctx.lineTo(checkpoint.x + checkpoint.width/2 + 8, checkpoint.y - 20);
                 this.ctx.fill();
-                
-                // Reflet
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                this.ctx.beginPath();
-                this.ctx.ellipse(obstacle.x + obstacle.width/3, obstacle.y + obstacle.height/3, 
-                    5, 3, 0, 0, Math.PI * 2);
-                this.ctx.fill();
+            } else {
+                this.ctx.strokeStyle = '#666666';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
             }
         });
-    }
-
-    drawPowerUps() {
+        
+        // Power-ups avec effets visuels améliorés
         this.powerUps.forEach(powerUp => {
             if (!powerUp.collected) {
-                const pulse = Math.sin(powerUp.pulse) * 0.2 + 1;
-                const size = 10 * pulse;
+                const pulse = Math.sin(powerUp.pulse) * 0.3 + 1;
+                const glowSize = Math.sin(powerUp.pulse * 2) * 5 + 10;
                 
-                // Ombre
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                this.ctx.beginPath();
-                this.ctx.arc(powerUp.x + 2, powerUp.y + 2, size, 0, Math.PI * 2);
-                this.ctx.fill();
+                // Effet de lueur
+                this.ctx.fillStyle = powerUp.color + '40';
+                this.ctx.fillRect(
+                    powerUp.x - glowSize/2, 
+                    powerUp.y - glowSize/2, 
+                    powerUp.width + glowSize, 
+                    powerUp.height + glowSize
+                );
                 
                 // Power-up principal
                 this.ctx.fillStyle = powerUp.color;
-                this.ctx.beginPath();
-                this.ctx.arc(powerUp.x, powerUp.y, size, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.fillRect(
+                    powerUp.x + (powerUp.width * (1-pulse))/2, 
+                    powerUp.y + (powerUp.height * (1-pulse))/2, 
+                    powerUp.width * pulse, 
+                    powerUp.height * pulse
+                );
                 
-                // Effet lumineux
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                this.ctx.beginPath();
-                this.ctx.arc(powerUp.x, powerUp.y, size * 0.5, 0, Math.PI * 2);
-                this.ctx.fill();
+                // Icône selon le type
+                this.ctx.fillStyle = '#000';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                const iconX = powerUp.x + powerUp.width/2;
+                const iconY = powerUp.y + powerUp.height/2 + 4;
                 
-                // Icône
-                this.drawText(powerUp.type === 'boost' ? '⚡' : '🛡️', powerUp.x, powerUp.y, {
-                    font: '12px Arial',
-                    align: 'center',
-                    baseline: 'middle'
-                });
+                switch (powerUp.type) {
+                    case 'boost': this.ctx.fillText('⚡', iconX, iconY); break;
+                    case 'shield': this.ctx.fillText('🛡', iconX, iconY); break;
+                    case 'lightning': this.ctx.fillText('⚡', iconX, iconY); break;
+                    case 'shell': this.ctx.fillText('🐚', iconX, iconY); break;
+                    case 'star': this.ctx.fillText('⭐', iconX, iconY); break;
+                }
             }
         });
-    }
-
-    drawCheckpoints() {
-        this.checkpoints.forEach((checkpoint, index) => {
-            const isActive = index === this.currentCheckpoint;
-            const color = checkpoint.passed ? '#00FF00' : (isActive ? '#FF0000' : '#FFFFFF');
+        
+        // Obstacles avec rotation et effets
+        this.obstacles.forEach(obstacle => {
+            this.ctx.save();
+            this.ctx.translate(obstacle.x + obstacle.width/2, obstacle.y + obstacle.height/2);
             
-            // Zone de checkpoint
-            this.ctx.fillStyle = `${color}33`;
-            this.ctx.fillRect(checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+            if (obstacle.rotation) {
+                this.ctx.rotate(obstacle.rotation);
+            }
             
-            // Bordure
-            this.ctx.strokeStyle = color;
-            this.ctx.lineWidth = 3;
-            this.ctx.strokeRect(checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+            // Ombre de l'obstacle
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            this.ctx.fillRect(-obstacle.width/2 + 1, -obstacle.height/2 + 1, obstacle.width, obstacle.height);
             
-            // Numéro
-            this.drawText((index + 1).toString(), 
-                checkpoint.x + checkpoint.width/2, checkpoint.y + checkpoint.height/2, {
-                font: '16px Arial',
-                color: color,
-                align: 'center',
-                baseline: 'middle',
-                shadow: true
+            // Obstacle principal
+            this.ctx.fillStyle = obstacle.color;
+            this.ctx.fillRect(-obstacle.width/2, -obstacle.height/2, obstacle.width, obstacle.height);
+            
+            // Détails selon le type
+            if (obstacle.type === 'barrel') {
+                this.ctx.strokeStyle = '#654321';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(-obstacle.width/2, -obstacle.height/2, obstacle.width, obstacle.height);
+            } else if (obstacle.type === 'oil') {
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                this.ctx.fillRect(-obstacle.width/2 + 2, -obstacle.height/2 + 2, obstacle.width - 4, obstacle.height - 4);
+            }
+            
+            this.ctx.restore();
+        });
+        
+        // Particules d'effets
+        this.particles.forEach(particle => {
+            if (particle.size > 0) {
+                this.ctx.fillStyle = particle.color;
+                this.ctx.fillRect(particle.x - particle.size/2, particle.y - particle.size/2, particle.size, particle.size);
+            }
+        });
+        
+        // Trails des karts avec effets spéciaux
+        [...this.opponents, this.player].forEach(kart => {
+            kart.trail.forEach((point, index) => {
+                const alpha = (point.life / 20) * 0.5;
+                let color = '#FFFFFF';
+                
+                if (point.boost) color = '#FFD700';
+                if (point.star) color = '#FF69B4';
+                
+                this.ctx.fillStyle = color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                const size = (point.life / 20) * 4;
+                this.ctx.fillRect(point.x - size/2, point.y - size/2, size, size);
             });
         });
+        
+        // Karts avec effets de statut
+        this.opponents.forEach(opponent => this.drawKart(opponent));
+        this.drawKart(this.player);
+        
+        // Interface utilisateur
+        this.drawUI();
     }
 
-    drawParticles() {
-        this.particles.forEach(particle => {
-            const alpha = particle.type === 'ambient' ? 0.6 : particle.life / particle.maxLife;
-            this.drawParticle(particle.x, particle.y, particle.size, particle.color, alpha);
-        });
-    }
-
-    drawKart() {
+    drawKart(kart) {
         this.ctx.save();
-        this.ctx.translate(this.kart.x + this.kart.width/2, this.kart.y + this.kart.height/2);
-        this.ctx.rotate(this.kart.angle);
+        this.ctx.translate(kart.x + kart.width/2, kart.y + kart.height/2);
+        this.ctx.rotate(kart.angle);
         
-        // Trail du kart
-        this.kart.trail.forEach((point, index) => {
-            const alpha = point.life / 30;
-            this.ctx.fillStyle = `rgba(139, 69, 19, ${alpha * 0.5})`;
-            this.ctx.beginPath();
-            this.ctx.arc(point.x - this.kart.x, point.y - this.kart.y, 2, 0, Math.PI * 2);
-            this.ctx.fill();
-        });
-        
-        // Corps du kart avec dégradé
-        this.ctx.fillStyle = this.kart.color;
-        this.ctx.fillRect(-this.kart.width/2, -this.kart.height/2, this.kart.width, this.kart.height);
-        
-        // Détails du kart
-        this.ctx.fillStyle = '#2C3E50';
-        this.ctx.fillRect(-5, -3, 10, 6);
-        
-        // Roues
-        this.ctx.fillStyle = '#000000';
-        this.ctx.fillRect(-12, -8, 4, 3);
-        this.ctx.fillRect(-12, 5, 4, 3);
-        this.ctx.fillRect(8, -8, 4, 3);
-        this.ctx.fillRect(8, 5, 4, 3);
-        
-        // Effet de boost
-        if (this.kart.boost > 0) {
+        // Effets de statut
+        if (kart.star > 0) {
+            // Effet étoile - invincibilité
+            const starGlow = Math.sin(this.time * 0.02) * 10 + 15;
             this.ctx.fillStyle = '#FFD700';
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 20, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.ctx.fillRect(-kart.width/2 - starGlow/2, -kart.height/2 - starGlow/2, 
+                             kart.width + starGlow, kart.height + starGlow);
         }
         
-        // Bouclier
-        if (this.kart.shield > 0) {
+        if (kart.shield > 0) {
+            // Bouclier protecteur
             this.ctx.strokeStyle = '#00CED1';
             this.ctx.lineWidth = 3;
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
-            this.ctx.stroke();
+            this.ctx.strokeRect(-kart.width/2 - 5, -kart.height/2 - 5, kart.width + 10, kart.height + 10);
+        }
+        
+        if (kart.lightning > 0) {
+            // Effet de ralentissement
+            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+            this.ctx.fillRect(-kart.width/2 - 3, -kart.height/2 - 3, kart.width + 6, kart.height + 6);
+        }
+        
+        // Ombre du kart
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillRect(-kart.width/2 + 2, -kart.height/2 + 2, kart.width, kart.height);
+        
+        // Corps principal du kart
+        this.ctx.fillStyle = kart.color;
+        this.ctx.fillRect(-kart.width/2, -kart.height/2, kart.width, kart.height);
+        
+        // Détails du kart
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(-kart.width/2 + 2, -kart.height/2 + 2, kart.width - 4, kart.height - 4);
+        
+        // Direction (avant du kart)
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.fillRect(kart.width/2 - 2, -2, 4, 4);
+        
+        // Effet boost
+        if (kart.boost > 0) {
+            this.ctx.fillStyle = '#FF4500';
+            for (let i = 0; i < 3; i++) {
+                this.ctx.fillRect(-kart.width/2 - 8 - i*3, -1 + (Math.random()-0.5)*4, 6, 2);
+            }
         }
         
         this.ctx.restore();
+        
+        // Nom et informations au-dessus du kart
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 11px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 2;
+        
+        // Position
+        const positionColor = kart === this.player ? '#FFD700' : '#FFF';
+        this.ctx.strokeText(`${kart.position}°`, kart.x + kart.width/2, kart.y - 25);
+        this.ctx.fillStyle = positionColor;
+        this.ctx.fillText(`${kart.position}°`, kart.x + kart.width/2, kart.y - 25);
+        
+        // Nom
+        this.ctx.strokeText(kart.name, kart.x + kart.width/2, kart.y - 10);
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.fillText(kart.name, kart.x + kart.width/2, kart.y - 10);
+        
+        // Indicateurs de statut
+        let statusY = kart.y + kart.height + 15;
+        if (kart.boost > 0) {
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.fillText('⚡', kart.x + kart.width/2 - 10, statusY);
+        }
+        if (kart.shield > 0) {
+            this.ctx.fillStyle = '#00CED1';
+            this.ctx.fillText('🛡', kart.x + kart.width/2, statusY);
+        }
+        if (kart.star > 0) {
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.fillText('⭐', kart.x + kart.width/2 + 10, statusY);
+        }
     }
 
     drawUI() {
-        // Panneau principal
-        this.drawRoundedRect(20, 20, 300, 120, 10, 'rgba(0, 0, 0, 0.8)');
+        // Panneau principal de course
+        this.drawRoundedRect(15, 15, 280, 140, 12, 'rgba(0, 0, 0, 0.85)');
         
-        // Informations de course
-        this.drawText(`Tour: ${this.currentLap}/${this.totalLaps}`, 40, 40, {
-            font: '18px Arial',
+        // Titre du panneau
+        this.drawText('MARIO KART STYLE', 30, 35, {
+            font: 'bold 16px Arial',
             color: '#FFD700',
             shadow: true
         });
         
-        this.drawText(`Temps: ${this.formatTime(this.raceTime)}`, 40, 65, {
+        // Position avec style coloré
+        const positionColor = this.player.position === 1 ? '#FFD700' : 
+                             this.player.position === 2 ? '#C0C0C0' : 
+                             this.player.position === 3 ? '#CD7F32' : '#FFF';
+        
+        this.drawText(`Position: ${this.player.position}/${this.numOpponents + 1}`, 30, 55, {
+            font: 'bold 18px Arial',
+            color: positionColor,
+            shadow: true
+        });
+        
+        // Tours
+        this.drawText(`Tour: ${this.player.lap}/${this.totalLaps}`, 30, 75, {
             font: '16px Arial',
             color: '#87CEEB',
             shadow: true
         });
         
-        if (this.bestLap !== Infinity) {
-            this.drawText(`Meilleur: ${this.formatTime(this.bestLap)}`, 40, 90, {
-                font: '16px Arial',
-                color: '#98FB98',
-                shadow: true
-            });
-        }
-        
-        this.drawText(`Vitesse: ${Math.abs(this.kart.speed).toFixed(1)}`, 40, 115, {
+        // Temps de course
+        this.drawText(`Temps: ${this.formatTime(this.raceTime)}`, 30, 95, {
             font: '16px Arial',
+            color: '#98FB98',
+            shadow: true
+        });
+        
+        // Vitesse
+        const speedKmh = Math.round(Math.abs(this.player.speed) * 10);
+        this.drawText(`Vitesse: ${speedKmh} km/h`, 30, 115, {
+            font: '14px Arial',
             color: '#FFA500',
             shadow: true
         });
         
-        // Indicateurs de power-ups
-        if (this.kart.boost > 0) {
-            this.drawRoundedRect(this.canvas.width - 120, 20, 100, 30, 5, 'rgba(255, 215, 0, 0.8)');
-            this.drawText(`⚡ ${Math.ceil(this.kart.boost/2)}s`, this.canvas.width - 70, 35, {
+        // Power-ups du joueur
+        if (this.player.boost > 0 || this.player.shield > 0 || this.player.star > 0) {
+            this.drawText(`Power-ups: ${this.player.boost > 0 ? '⚡' : ''}${this.player.shield > 0 ? '🛡' : ''}${this.player.star > 0 ? '⭐' : ''}`, 30, 135, {
                 font: '14px Arial',
-                color: '#000',
-                align: 'center'
+                color: '#FF69B4',
+                shadow: true
             });
         }
         
-        if (this.kart.shield > 0) {
-            this.drawRoundedRect(this.canvas.width - 120, 60, 100, 30, 5, 'rgba(0, 206, 209, 0.8)');
-            this.drawText(`🛡️ ${Math.ceil(this.kart.shield/10)}s`, this.canvas.width - 70, 75, {
-                font: '14px Arial',
-                color: '#000',
-                align: 'center'
-            });
-        }
+        // Mini classement
+        this.drawRoundedRect(this.canvas.width - 200, 15, 180, 120, 10, 'rgba(0, 0, 0, 0.8)');
+        this.drawText('CLASSEMENT', this.canvas.width - 190, 35, {
+            font: 'bold 14px Arial',
+            color: '#FFD700',
+            shadow: true
+        });
         
-        // Instructions
-        const instructions = this.controls.touchControls ? 
-            'Utilisez les contrôles tactiles pour piloter' :
-            'ZQSD/Flèches: Piloter | ESPACE: Turbo';
+        const allKarts = [this.player, ...this.opponents].sort((a, b) => a.position - b.position);
+        allKarts.slice(0, 4).forEach((kart, index) => {
+            const isPlayer = kart === this.player;
+            const color = isPlayer ? '#FFD700' : '#FFF';
+            const text = `${kart.position}. ${kart.name}`;
             
-        this.drawText(instructions, this.canvas.width/2, this.canvas.height - 20, {
-            font: '14px Arial',
+            this.drawText(text, this.canvas.width - 190, 55 + index * 18, {
+                font: isPlayer ? 'bold 12px Arial' : '12px Arial',
+                color: color,
+                shadow: true
+            });
+        });
+        
+        // État de la course avec effets
+        if (this.raceState === 'countdown') {
+            const countdownText = this.countdown > 0 ? this.countdown.toString() : 'GO!';
+            const pulseSize = Math.sin(this.time * 0.01) * 10 + 72;
+            
+            this.drawText(countdownText, this.canvas.width/2, this.canvas.height/2, {
+                font: `bold ${pulseSize}px Arial`,
+                color: this.countdown <= 1 ? '#00FF00' : '#FF0000',
+                align: 'center',
+                shadow: true
+            });
+            
+            // Effet de halo
+            this.ctx.strokeStyle = this.countdown <= 1 ? '#00FF00' : '#FF0000';
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeText(countdownText, this.canvas.width/2, this.canvas.height/2);
+            
+        } else if (this.raceState === 'finished') {
+            this.drawRoundedRect(this.canvas.width/2 - 150, this.canvas.height/2 - 80, 300, 160, 15, 'rgba(0, 0, 0, 0.9)');
+            
+            this.drawText('COURSE TERMINÉE!', this.canvas.width/2, this.canvas.height/2 - 40, {
+                font: 'bold 36px Arial',
+                color: '#FFD700',
+                align: 'center',
+                shadow: true
+            });
+            
+            const finalPos = this.finalPositions.find(p => p.name === this.player.name);
+            if (finalPos) {
+                this.drawText(`Votre position: ${finalPos.position}`, this.canvas.width/2, this.canvas.height/2, {
+                    font: 'bold 24px Arial',
+                    color: finalPos.position === 1 ? '#FFD700' : '#FFF',
+                    align: 'center',
+                    shadow: true
+                });
+                
+                this.drawText(`Temps final: ${this.formatTime(finalPos.time)}`, this.canvas.width/2, this.canvas.height/2 + 30, {
+                    font: '18px Arial',
+                    color: '#87CEEB',
+                    align: 'center',
+                    shadow: true
+                });
+            }
+        }
+        
+        // Instructions selon le dispositif
+        const instructions = this.controls.touchControls ? 
+            'Contrôles tactiles - Touchez pour diriger et accélérer' :
+            'Z/S: Accélérer/Freiner | Q/D: Tourner | ESPACE: Utiliser objet';
+            
+        this.drawText(instructions, this.canvas.width/2, this.canvas.height - 15, {
+            font: '13px Arial',
             color: '#DDD',
             align: 'center',
             shadow: true
         });
-    }
-
-    drawMiniMap() {
-        const mapX = this.canvas.width - 160;
-        const mapY = this.canvas.height - 120;
-        const mapWidth = 140;
-        const mapHeight = 100;
         
-        // Fond de la mini-carte
-        this.drawRoundedRect(mapX, mapY, mapWidth, mapHeight, 5, 'rgba(0, 0, 0, 0.8)');
-        
-        this.ctx.save();
-        this.ctx.translate(mapX, mapY);
-        this.ctx.scale(this.miniMapScale, this.miniMapScale);
-        
-        // Piste sur la mini-carte
-        this.ctx.fillStyle = '#696969';
-        this.ctx.fillRect(100, 80, 600, 440);
-        
-        // Murs
-        this.track.forEach(wall => {
-            this.ctx.fillStyle = '#8B4513';
-            this.ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
-        });
-        
-        // Kart sur la mini-carte
-        this.ctx.fillStyle = '#FF0000';
-        this.ctx.beginPath();
-        this.ctx.arc(this.kart.x, this.kart.y, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
+        // Indicateur de prochain checkpoint
+        const nextCheckpoint = this.checkpoints[this.player.checkpointIndex];
+        if (nextCheckpoint) {
+            const dx = nextCheckpoint.x - this.player.x;
+            const dy = nextCheckpoint.y - this.player.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            this.drawText(`Prochain checkpoint: ${Math.round(distance)}m`, this.canvas.width - 200, this.canvas.height - 30, {
+                font: '12px Arial',
+                color: '#90EE90',
+                shadow: true
+            });
+        }
     }
 }
