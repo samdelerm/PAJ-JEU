@@ -41,6 +41,14 @@ class KartingGame extends BaseGame {
         this.initRace();
     }
 
+    getGameSpecificControls() {
+        return [
+            { key: 'Shift', action: 'Boost' },
+            { key: 'Ctrl', action: 'Frein' },
+            { key: 'Espace', action: 'Action/Utiliser objet' }
+        ];
+    }
+
     initRace() {
         this.createCircuit();
         this.createCheckpoints();

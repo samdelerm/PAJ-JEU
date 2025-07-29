@@ -24,6 +24,13 @@ class VolleyballGame extends BaseGame {
         this.initWaves();
     }
 
+    getGameSpecificControls() {
+        return [
+            { key: 'Espace', action: 'Saut/Frappe' },
+            { key: 'Tactile', action: 'Tap pour sauter' }
+        ];
+    }
+
     initWaves() {
         for (let i = 0; i < 5; i++) {
             this.waves.push({

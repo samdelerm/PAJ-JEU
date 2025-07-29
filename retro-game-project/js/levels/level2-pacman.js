@@ -22,6 +22,13 @@ class PacmanGame extends BaseGame {
         this.initCampfire();
     }
 
+    getGameSpecificControls() {
+        return [
+            { key: 'Espace', action: 'Sprint/Dash' },
+            { key: 'Tactile', action: 'Tap pour changer direction' }
+        ];
+    }
+
     loadSprites() {
         const spriteFiles = [
             'pacman.png',
