@@ -1,7 +1,5 @@
 class GameManager {
     constructor() {
-        this.canvas = null;
-        this.ctx = null;
         this.currentLevel = null;
         this.init();
     }
@@ -9,13 +7,7 @@ class GameManager {
     init() {
         // Attendre que le DOM soit chargé
         document.addEventListener('DOMContentLoaded', () => {
-            this.canvas = document.getElementById('game-canvas');
-            if (this.canvas) {
-                this.ctx = this.canvas.getContext('2d');
-                this.canvas.width = 800;
-                this.canvas.height = 600;
-                this.setupLevelButtons();
-            }
+            this.setupLevelButtons();
         });
     }
 
@@ -29,20 +21,45 @@ class GameManager {
         console.log(`Starting ${levelType}`);
         
         // Arrêter le niveau actuel s'il existe
-        if (this.currentLevel && this.currentLevel.stop) {
-            this.currentLevel.stop();
+        if (this.currentLevel) {
+            if (this.currentLevel.stop) {
+                this.currentLevel.stop();
+            }
+            if (this.currentLevel.cleanup) {
+                this.currentLevel.cleanup();
+            }
         }
+
+        // Masquer la sélection de niveau et afficher le canvas
+        const levelSelection = document.querySelector('.level-selection');
+        if (levelSelection) {
+            levelSelection.style.display = 'none';
+        }
+        
+        // Créer ou réutiliser le canvas
+        let canvas = document.getElementById('gameCanvas');
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.id = 'gameCanvas';
+            canvas.className = 'game-screen';
+            canvas.width = 800;
+            canvas.height = 600;
+            document.getElementById('game-container').appendChild(canvas);
+        }
+        
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
 
         // Créer le nouveau niveau
         switch(levelType) {
             case 'volleyball':
-                this.currentLevel = new VolleyballGame(this.canvas, this.ctx);
+                this.currentLevel = new VolleyballGame(canvas, ctx);
                 break;
             case 'pacman':
-                this.currentLevel = new PacmanGame(this.canvas, this.ctx);
+                this.currentLevel = new PacmanGame(canvas, ctx);
                 break;
             case 'karting':
-                this.currentLevel = new KartingGame(this.canvas, this.ctx);
+                this.currentLevel = new KartingGame(canvas, ctx);
                 break;
         }
 

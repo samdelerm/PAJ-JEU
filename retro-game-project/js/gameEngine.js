@@ -141,119 +141,187 @@ class ControlManager {
         style.textContent = `
             #virtual-controls {
                 position: fixed;
-                bottom: 20px;
+                bottom: 10px;
                 left: 0;
                 right: 0;
                 display: flex;
                 justify-content: space-between;
-                padding: 0 20px;
+                padding: 0 15px;
                 pointer-events: none;
                 z-index: 1000;
+                opacity: 0.8;
             }
             .dpad, .action-buttons {
                 position: relative;
                 pointer-events: all;
             }
             .dpad {
-                width: 140px;
-                height: 140px;
-                background: rgba(0,0,0,0.6);
+                width: 120px;
+                height: 120px;
+                background: rgba(0,0,0,0.75);
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.3);
+                border: 2px solid rgba(255,255,255,0.3);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
+                box-shadow: 0 4px 20px rgba(0,0,0,0.6);
             }
             .dpad button {
                 position: absolute;
-                width: 50px;
-                height: 50px;
+                width: 40px;
+                height: 40px;
                 border: none;
-                border-radius: 12px;
-                background: rgba(255,255,255,0.8);
+                border-radius: 8px;
+                background: rgba(255,255,255,0.85);
                 color: #333;
-                font-size: 24px;
+                font-size: 18px;
                 font-weight: bold;
                 user-select: none;
                 touch-action: manipulation;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
                 transition: all 0.1s ease;
             }
             .dpad button:active {
                 background: rgba(0,242,254,0.9);
                 color: white;
-                transform: scale(0.95);
-                box-shadow: 0 2px 8px rgba(0,242,254,0.5);
+                transform: scale(0.9);
+                box-shadow: 0 1px 4px rgba(0,242,254,0.5);
             }
-            .btn-up { top: 10px; left: 45px; }
-            .btn-down { bottom: 10px; left: 45px; }
-            .btn-left { top: 45px; left: 10px; }
-            .btn-right { top: 45px; right: 10px; }
+            .btn-up { top: 8px; left: 40px; }
+            .btn-down { bottom: 8px; left: 40px; }
+            .btn-left { top: 40px; left: 8px; }
+            .btn-right { top: 40px; right: 8px; }
             .action-buttons {
                 display: flex;
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
             }
             .action-buttons button {
-                width: 70px;
-                height: 70px;
+                width: 55px;
+                height: 55px;
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.3);
-                background: rgba(220,53,69,0.8);
+                border: 2px solid rgba(255,255,255,0.3);
+                background: rgba(220,53,69,0.85);
                 color: white;
-                font-size: 20px;
+                font-size: 16px;
                 font-weight: bold;
                 user-select: none;
                 touch-action: manipulation;
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
-                box-shadow: 0 6px 20px rgba(220,53,69,0.4);
+                box-shadow: 0 4px 15px rgba(220,53,69,0.4);
                 transition: all 0.1s ease;
             }
             .action-buttons button:active {
                 background: rgba(255,215,0,0.9);
                 transform: scale(0.9);
-                box-shadow: 0 4px 15px rgba(255,215,0,0.6);
+                box-shadow: 0 2px 8px rgba(255,215,0,0.6);
             }
             .back-btn {
                 position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 50px;
-                height: 50px;
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
                 border-radius: 50%;
-                border: 2px solid rgba(255,255,255,0.3);
-                background: rgba(0,0,0,0.7);
+                border: 2px solid rgba(255,255,255,0.4);
+                background: rgba(0,0,0,0.8);
                 color: white;
-                font-size: 20px;
+                font-size: 18px;
                 cursor: pointer;
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
                 transition: all 0.2s ease;
                 z-index: 1001;
+                opacity: 0.9;
             }
             .back-btn:active {
                 background: rgba(168,85,247,0.8);
                 transform: scale(0.9);
+                box-shadow: 0 2px 8px rgba(168,85,247,0.6);
             }
             @media (max-width: 768px) {
                 .back-btn {
                     display: block;
                 }
+                #virtual-controls {
+                    bottom: 5px;
+                    padding: 0 10px;
+                }
             }
             @media (min-width: 769px) {
                 .back-btn { display: none; }
-            }
-            @media (min-width: 768px) {
                 #virtual-controls { display: none; }
             }
         `;
         document.head.appendChild(style);
     }
     
+    cleanup() {
+        // Supprimer tous les event listeners
+        document.removeEventListener('keydown', this.handleKeyDown);
+        document.removeEventListener('keyup', this.handleKeyUp);
+        
+        // Supprimer les event listeners tactiles
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            canvas.removeEventListener('touchstart', this.handleTouchStart);
+            canvas.removeEventListener('touchend', this.handleTouchEnd);
+            canvas.removeEventListener('touchmove', this.handleTouchMove);
+        }
+        
+        // Réinitialiser les états des touches
+        this.keys = {};
+        this.touch = { active: false, x: 0, y: 0 };
+    }
+    
     backToMenu() {
-        // Recharger la page pour retourner au menu principal
-        window.location.reload();
+        // Arrêter tous les timers et nettoyer le jeu
+        if (this.gameLoop) {
+            cancelAnimationFrame(this.gameLoop);
+            this.gameLoop = null;
+        }
+        
+        // Nettoyer les event listeners
+        this.cleanup();
+        
+        // Supprimer les contrôles virtuels
+        const virtualControls = document.getElementById('virtual-controls');
+        if (virtualControls) {
+            virtualControls.remove();
+        }
+        
+        const backButton = document.querySelector('.back-btn');
+        if (backButton) {
+            backButton.remove();
+        }
+        
+        // Afficher le menu principal et cacher le canvas
+        const gameContainer = document.getElementById('game-container');
+        const canvas = document.getElementById('gameCanvas');
+        const levelSelection = document.querySelector('.level-selection');
+        
+        if (canvas) {
+            canvas.style.display = 'none';
+        }
+        
+        if (levelSelection) {
+            levelSelection.style.display = 'block';
+        }
+        
+        // Restaurer le style original du container
+        if (gameContainer) {
+            gameContainer.style.padding = '';
+            gameContainer.style.maxWidth = '';
+            gameContainer.style.width = '';
+        }
+        
+        // Réactiver les boutons de sélection de niveau
+        const levelButtons = document.querySelectorAll('.level-btn');
+        levelButtons.forEach(btn => {
+            btn.style.pointerEvents = 'auto';
+            btn.disabled = false;
+        });
     }
 }
 
