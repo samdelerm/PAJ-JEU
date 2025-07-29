@@ -123,11 +123,17 @@ class ControlManager {
                     <button data-control="action" class="btn-action">A</button>
                     <button data-control="jump" class="btn-jump">B</button>
                 </div>
+                <button id="back-to-menu" class="back-btn">🏠</button>
             </div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', controlsHTML);
         this.addVirtualControlsCSS();
+        
+        // Ajouter le gestionnaire de retour au menu
+        document.getElementById('back-to-menu').addEventListener('click', () => {
+            this.backToMenu();
+        });
     }
 
     addVirtualControlsCSS() {
@@ -149,42 +155,105 @@ class ControlManager {
                 pointer-events: all;
             }
             .dpad {
-                width: 120px;
-                height: 120px;
+                width: 140px;
+                height: 140px;
+                background: rgba(0,0,0,0.6);
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,0.3);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
             }
             .dpad button {
                 position: absolute;
-                width: 40px;
-                height: 40px;
+                width: 50px;
+                height: 50px;
                 border: none;
-                border-radius: 8px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.8);
+                color: #333;
+                font-size: 24px;
+                font-weight: bold;
+                user-select: none;
+                touch-action: manipulation;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                transition: all 0.1s ease;
+            }
+            .dpad button:active {
+                background: rgba(0,242,254,0.9);
+                color: white;
+                transform: scale(0.95);
+                box-shadow: 0 2px 8px rgba(0,242,254,0.5);
+            }
+            .btn-up { top: 10px; left: 45px; }
+            .btn-down { bottom: 10px; left: 45px; }
+            .btn-left { top: 45px; left: 10px; }
+            .btn-right { top: 45px; right: 10px; }
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .action-buttons button {
+                width: 70px;
+                height: 70px;
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,0.3);
+                background: rgba(220,53,69,0.8);
+                color: white;
+                font-size: 20px;
+                font-weight: bold;
+                user-select: none;
+                touch-action: manipulation;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                box-shadow: 0 6px 20px rgba(220,53,69,0.4);
+                transition: all 0.1s ease;
+            }
+            .action-buttons button:active {
+                background: rgba(255,215,0,0.9);
+                transform: scale(0.9);
+                box-shadow: 0 4px 15px rgba(255,215,0,0.6);
+            }
+            .back-btn {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.3);
                 background: rgba(0,0,0,0.7);
                 color: white;
                 font-size: 20px;
-                user-select: none;
-                touch-action: manipulation;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                transition: all 0.2s ease;
+                z-index: 1001;
             }
-            .btn-up { top: 0; left: 40px; }
-            .btn-down { bottom: 0; left: 40px; }
-            .btn-left { top: 40px; left: 0; }
-            .btn-right { top: 40px; right: 0; }
-            .action-buttons button {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                border: none;
-                background: rgba(220,53,69,0.8);
-                color: white;
-                font-size: 18px;
-                margin: 10px;
-                user-select: none;
-                touch-action: manipulation;
+            .back-btn:active {
+                background: rgba(168,85,247,0.8);
+                transform: scale(0.9);
+            }
+            @media (max-width: 768px) {
+                .back-btn {
+                    display: block;
+                }
+            }
+            @media (min-width: 769px) {
+                .back-btn { display: none; }
             }
             @media (min-width: 768px) {
                 #virtual-controls { display: none; }
             }
         `;
         document.head.appendChild(style);
+    }
+    
+    backToMenu() {
+        // Recharger la page pour retourner au menu principal
+        window.location.reload();
     }
 }
 

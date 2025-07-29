@@ -22,7 +22,6 @@ class GameManager {
     setupLevelButtons() {
         document.getElementById('level1').addEventListener('click', () => this.startLevel('volleyball'));
         document.getElementById('level2').addEventListener('click', () => this.startLevel('pacman'));
-        document.getElementById('level3').addEventListener('click', () => this.startLevel('archery'));
         document.getElementById('level4').addEventListener('click', () => this.startLevel('karting'));
     }
 
@@ -41,9 +40,6 @@ class GameManager {
                 break;
             case 'pacman':
                 this.currentLevel = new PacmanGame(this.canvas, this.ctx);
-                break;
-            case 'archery':
-                this.currentLevel = new ArcheryGame(this.canvas, this.ctx);
                 break;
             case 'karting':
                 this.currentLevel = new KartingGame(this.canvas, this.ctx);

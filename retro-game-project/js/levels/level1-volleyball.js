@@ -2,7 +2,7 @@ class VolleyballGame extends BaseGame {
     constructor(canvas, ctx) {
         super(canvas, ctx);
         this.ball = { 
-            x: 400, y: 300, vx: 3, vy: -2, radius: 15,
+            x: 400, y: 300, vx: 2, vy: -1.5, radius: 15,
             trail: [], rotation: 0
         };
         this.player1 = { 
@@ -115,8 +115,8 @@ class VolleyballGame extends BaseGame {
 
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
-        this.ball.vy += 0.4; // Gravité
-        this.ball.rotation += 0.2;
+        this.ball.vy += 0.3; // Gravité réduite pour plus de contrôle
+        this.ball.rotation += 0.15;
 
         // Collision avec le sol
         if (this.ball.y > 570) {
@@ -131,17 +131,17 @@ class VolleyballGame extends BaseGame {
 
         // Collision avec les bords
         if (this.ball.x < 15 || this.ball.x > 785) {
-            this.ball.vx *= -0.8;
+            this.ball.vx *= -0.7; // Réduction de vitesse plus importante
             this.createWaterSplash(this.ball.x < 400 ? 15 : 785, this.ball.y);
         }
         if (this.ball.y < 15) {
-            this.ball.vy *= -0.7;
+            this.ball.vy *= -0.6; // Réduction de vitesse plus importante
         }
 
         // Collision avec le filet
         if (this.ball.x > 380 && this.ball.x < 420 && this.ball.y > 420) {
-            this.ball.vx *= -0.9;
-            this.ball.vy *= 0.8;
+            this.ball.vx *= -0.8; // Réduction de vitesse
+            this.ball.vy *= 0.7;
         }
 
         // Collision avec les joueurs
@@ -162,8 +162,8 @@ class VolleyballGame extends BaseGame {
 
         if (distance < this.ball.radius + 25) {
             // Déterminer la force selon si le joueur saute
-            const power = player.isJumping ? 14 : 10;
-            const upwardForce = player.isJumping ? -8 : -5;
+            const power = player.isJumping ? 10 : 7; // Puissances réduites
+            const upwardForce = player.isJumping ? -6 : -4; // Forces verticales réduites
             
             // Déterminer la direction selon le côté du joueur
             let targetDirection;
@@ -177,9 +177,9 @@ class VolleyballGame extends BaseGame {
             
             // Calculer l'angle pour envoyer la balle de l'autre côté
             const horizontalPower = power * targetDirection;
-            const verticalPower = upwardForce + Math.random() * -3; // Variation aléatoire
+            const verticalPower = upwardForce + Math.random() * -2; // Variation réduite
             
-            this.ball.vx = horizontalPower + Math.random() * 2 - 1; // Légère variation
+            this.ball.vx = horizontalPower + Math.random() * 1.5 - 0.75; // Variation réduite
             this.ball.vy = verticalPower;
             
             this.createHitParticles(this.ball.x, this.ball.y, player.color);
@@ -268,8 +268,8 @@ class VolleyballGame extends BaseGame {
     resetBall() {
         this.ball.x = 400;
         this.ball.y = 300;
-        this.ball.vx = Math.random() > 0.5 ? 4 : -4;
-        this.ball.vy = -3;
+        this.ball.vx = Math.random() > 0.5 ? 2.5 : -2.5; // Vitesse initiale réduite
+        this.ball.vy = -2; // Vitesse verticale réduite
         this.ball.trail = [];
         this.ball.rotation = 0;
     }

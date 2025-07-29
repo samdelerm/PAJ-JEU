@@ -428,13 +428,36 @@ class KartingGame extends BaseGame {
                 kart.y < wall.y + wall.height && 
                 kart.y + kart.height > wall.y) {
                 
-                // Rebond plus réaliste
-                kart.x -= kart.vx * 1.5;
-                kart.y -= kart.vy * 1.5;
-                kart.speed *= -0.4;
+                // Rebond plus réaliste avec pénalités importantes
+                kart.x -= kart.vx * 2;
+                kart.y -= kart.vy * 2;
                 
-                // Effet visuel de collision
-                this.createCollisionEffect(kart.x, kart.y);
+                // Pénalités sévères pour collision avec mur
+                kart.speed *= -0.6; // Rebond avec forte pénalité
+                kart.boost = Math.max(0, kart.boost - 30); // Perte de boost
+                kart.shield = Math.max(0, kart.shield - 60); // Perte de bouclier
+                
+                // Effet de rotation du kart lors de l'impact
+                kart.angle += (Math.random() - 0.5) * 0.5;
+                
+                // Effet visuel de collision renforcé
+                this.createCollisionEffect(kart.x + kart.width/2, kart.y + kart.height/2);
+                
+                // Création de particules d'étincelles supplémentaires
+                for (let i = 0; i < 15; i++) {
+                    this.particles.push({
+                        x: kart.x + kart.width/2,
+                        y: kart.y + kart.height/2,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: (Math.random() - 0.5) * 12,
+                        life: 45,
+                        color: '#FF4500',
+                        size: 4
+                    });
+                }
+                
+                // Effet de ralentissement temporaire
+                kart.lightning = Math.max(kart.lightning, 90);
             }
         });
 
