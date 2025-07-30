@@ -58,7 +58,7 @@ class ControlManager {
         this.touchPositions = {};
         this.gamepadIndex = null;
         this.vibrationSupported = 'vibrate' in navigator;
-        this.deadZone = 0.2; // Zone morte pour les joysticks
+        this.deadZone = 0; // Zone morte pour les joysticks
         this.touchSensitivity = 1.5;
         this.setupControls();
         this.createVirtualControls();
@@ -151,7 +151,7 @@ class ControlManager {
     }
 
     handleSwipeGesture(angle, distance) {
-        const intensity = Math.min(distance / 100, 1);
+        const intensity = 100
         
         if (angle >= -45 && angle < 45) {
             this.touches['swipe-right'] = intensity;
