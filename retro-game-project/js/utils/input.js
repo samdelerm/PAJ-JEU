@@ -28,7 +28,3 @@ class InputManager {
 
 // Instance globale
 const inputManager = new InputManager();
-
-
-
-InputHandler.init();

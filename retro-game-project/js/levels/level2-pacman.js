@@ -49,9 +49,9 @@ class PacmanGame extends BaseGame {
                 }
             };
             img.onerror = () => {
-                console.warn(`Sprite ${fileName} non trouvé, utilisation du rendu par défaut`);
-                // Marquer comme "cassé" pour éviter les erreurs
-                this.sprites[fileName.replace('.png', '')] = null;
+                console.log(`Sprite ${fileName} non trouvé, utilisation du rendu par défaut`);
+                // Marquer comme "cassé" pour éviter les erreurs et utiliser le rendu de secours
+                this.sprites[fileName.replace('.png', '')] = 'fallback';
                 loadedCount++;
                 if (loadedCount === spriteFiles.length) {
                     this.spritesLoaded = true;
