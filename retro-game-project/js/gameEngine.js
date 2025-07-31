@@ -58,8 +58,11 @@ class ControlManager {
         this.touchPositions = {};
         this.gamepadIndex = null;
         this.vibrationSupported = 'vibrate' in navigator;
-        this.deadZone = 0; // Zone morte pour les joysticks
-        this.touchSensitivity = 1.5;
+        this.deadZone = 0.1; // Zone morte réduite pour plus de réactivité
+        this.touchSensitivity = 2.0; // Sensibilité tactile augmentée
+        this.touchThreshold = 15; // Seuil de détection plus bas
+        this.lastTouchTime = 0;
+        this.touchDebounce = 16; // ~60fps
         this.setupControls();
         this.createVirtualControls();
         this.setupGamepad();
@@ -85,15 +88,32 @@ class ControlManager {
             this.keys[e.code] = false;
         });
 
-        // Contrôles tactiles améliorés avec gestes
-        document.addEventListener('touchstart', (e) => this.handleTouch(e, true), { passive: false });
-        document.addEventListener('touchend', (e) => this.handleTouch(e, false), { passive: false });
-        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        // Contrôles tactiles optimisés pour la performance
+        const touchOptions = { passive: false, capture: true };
+        document.addEventListener('touchstart', (e) => this.handleTouch(e, true), touchOptions);
+        document.addEventListener('touchend', (e) => this.handleTouch(e, false), touchOptions);
+        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), touchOptions);
+        document.addEventListener('touchcancel', (e) => this.handleTouch(e, false), touchOptions);
         
-        // Prévenir le zoom et les gestes par défaut
-        document.addEventListener('gesturestart', (e) => e.preventDefault());
-        document.addEventListener('gesturechange', (e) => e.preventDefault());
-        document.addEventListener('gestureend', (e) => e.preventDefault());
+        // Désactiver les gestes par défaut qui peuvent interférer
+        document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+        
+        // Désactiver le menu contextuel sur les contrôles
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('#virtual-controls')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Optimisations pour les appareils mobiles
+        if (this.touchControls) {
+            document.body.style.touchAction = 'none';
+            document.body.style.userSelect = 'none';
+            document.body.style.webkitUserSelect = 'none';
+            document.body.style.webkitTouchCallout = 'none';
+        }
     }
 
     setupGamepad() {
@@ -112,56 +132,118 @@ class ControlManager {
 
     handleTouch(e, isPressed) {
         e.preventDefault();
-        for (let touch of e.changedTouches) {
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (element && element.dataset.control) {
-                this.touches[element.dataset.control] = isPressed;
-                this.touchPositions[touch.identifier] = {
-                    x: touch.clientX,
-                    y: touch.clientY,
-                    control: element.dataset.control
-                };
+        e.stopPropagation();
+        
+        // Traitement plus rapide avec requestAnimationFrame pour éviter les blocages
+        requestAnimationFrame(() => {
+            for (let touch of e.changedTouches) {
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
                 
-                if (isPressed) {
-                    this.hapticFeedback('medium');
-                    element.classList.add('pressed');
-                } else {
-                    element.classList.remove('pressed');
+                if (element && element.dataset && element.dataset.control) {
+                    const control = element.dataset.control;
+                    
+                    // Mise à jour immédiate de l'état
+                    this.touches[control] = isPressed;
+                    
+                    // Stockage de la position pour les gestes
+                    if (isPressed) {
+                        this.touchPositions[touch.identifier] = {
+                            x: touch.clientX,
+                            y: touch.clientY,
+                            control: control,
+                            timestamp: performance.now()
+                        };
+                        
+                        // Feedback visuel immédiat
+                        element.classList.add('pressed');
+                        this.hapticFeedback('light');
+                    } else {
+                        // Nettoyage des données de touch
+                        delete this.touchPositions[touch.identifier];
+                        element.classList.remove('pressed');
+                    }
                 }
             }
-        }
+        });
     }
 
     handleTouchMove(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
+        // Traitement optimisé des mouvements
         for (let touch of e.changedTouches) {
-            if (this.touchPositions[touch.identifier]) {
-                const startPos = this.touchPositions[touch.identifier];
-                const deltaX = touch.clientX - startPos.x;
-                const deltaY = touch.clientY - startPos.y;
+            const touchData = this.touchPositions[touch.identifier];
+            if (touchData) {
+                const deltaX = touch.clientX - touchData.x;
+                const deltaY = touch.clientY - touchData.y;
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 
-                // Gestion des gestes de swipe
-                if (distance > 30) {
+                // Seuil plus bas pour des gestes plus réactifs
+                if (distance > 20) {
                     const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
                     this.handleSwipeGesture(angle, distance);
+                }
+                
+                // Vérifier si le doigt est toujours sur le bon élément
+                const currentElement = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (currentElement && currentElement.dataset.control) {
+                    const newControl = currentElement.dataset.control;
+                    if (newControl !== touchData.control) {
+                        // Désactiver l'ancien contrôle
+                        this.touches[touchData.control] = false;
+                        document.querySelector(`[data-control="${touchData.control}"]`)?.classList.remove('pressed');
+                        
+                        // Activer le nouveau contrôle
+                        this.touches[newControl] = true;
+                        currentElement.classList.add('pressed');
+                        touchData.control = newControl;
+                    }
+                } else {
+                    // Le doigt a quitté la zone de contrôle
+                    this.touches[touchData.control] = false;
+                    document.querySelector(`[data-control="${touchData.control}"]`)?.classList.remove('pressed');
                 }
             }
         }
     }
 
     handleSwipeGesture(angle, distance) {
-        const intensity = 100
+        const intensity = Math.min(distance / 50, 2); // Plus réactif
+        const now = performance.now();
         
-        if (angle >= -45 && angle < 45) {
+        // Éviter les gestes trop rapprochés
+        if (now - this.lastTouchTime < this.touchDebounce) return;
+        this.lastTouchTime = now;
+        
+        // Réinitialiser tous les gestes précédents
+        this.touches['swipe-up'] = false;
+        this.touches['swipe-down'] = false;
+        this.touches['swipe-left'] = false;
+        this.touches['swipe-right'] = false;
+        
+        // Détection plus précise des directions
+        if (angle >= -30 && angle <= 30) {
             this.touches['swipe-right'] = intensity;
-        } else if (angle >= 45 && angle < 135) {
+            this.hapticFeedback('light');
+        } else if (angle >= 60 && angle <= 120) {
             this.touches['swipe-down'] = intensity;
-        } else if (angle >= 135 || angle < -135) {
+            this.hapticFeedback('light');
+        } else if (angle >= 150 || angle <= -150) {
             this.touches['swipe-left'] = intensity;
-        } else {
+            this.hapticFeedback('light');
+        } else if (angle >= -120 && angle <= -60) {
             this.touches['swipe-up'] = intensity;
+            this.hapticFeedback('light');
         }
+        
+        // Auto-reset après un court délai
+        setTimeout(() => {
+            this.touches['swipe-up'] = false;
+            this.touches['swipe-down'] = false;
+            this.touches['swipe-left'] = false;
+            this.touches['swipe-right'] = false;
+        }, 100);
     }
 
     getGamepadInput() {
@@ -186,51 +268,79 @@ class ControlManager {
     hapticFeedback(intensity = 'medium') {
         if (!this.vibrationSupported) return;
         
+        // Limiter la fréquence des vibrations pour éviter les ralentissements
+        const now = performance.now();
+        if (now - (this.lastHapticTime || 0) < 50) return;
+        this.lastHapticTime = now;
+        
         const patterns = {
-            light: 10,
-            medium: [10, 10, 10],
-            strong: [50, 30, 50]
+            light: 5,     // Plus court et plus léger
+            medium: 10,   // Réduit de [10,10,10] à 10
+            strong: 20    // Réduit de [50,30,50] à 20
         };
         
-        navigator.vibrate(patterns[intensity] || patterns.medium);
+        try {
+            navigator.vibrate(patterns[intensity] || patterns.medium);
+        } catch (e) {
+            // Silencieusement ignorer les erreurs de vibration
+        }
     }
 
     isPressed(control) {
-        // Mapping étendu des contrôles
-        const keyMap = {
-            'up': ['z', 'w', 'arrowup', 'KeyW', 'KeyZ'],
-            'down': ['s', 'arrowdown', 'KeyS'],
-            'left': ['q', 'a', 'arrowleft', 'KeyA', 'KeyQ'],
-            'right': ['d', 'arrowright', 'KeyD'],
-            'action': [' ', 'space', 'enter', 'Space', 'Enter'],
-            'jump': ['z', 'w', 'space', 'KeyW', 'KeyZ', 'Space'],
-            'boost': ['shift', 'shiftleft', 'shiftright'],
-            'brake': ['control', 'controlleft', 'controlright']
-        };
-
-        // Vérifier les contrôles tactiles
-        if (this.touchControls && this.touches[control]) return true;
-        
-        // Vérifier les contrôles clavier
-        const keys = keyMap[control] || [control];
-        const keyPressed = keys.some(key => this.keys[key] || this.keys[key.toLowerCase()]);
-        
-        // Vérifier la manette de jeu
-        const gamepad = this.getGamepadInput();
-        if (gamepad) {
+        // Optimisation : vérifier d'abord les contrôles tactiles (plus fréquents sur mobile)
+        if (this.touchControls) {
+            // Vérification directe des contrôles tactiles
+            if (this.touches[control]) return true;
+            
+            // Vérification des gestes swipe
             switch(control) {
-                case 'up': return keyPressed || gamepad.leftStick.y < -0.5 || gamepad.buttons[12];
-                case 'down': return keyPressed || gamepad.leftStick.y > 0.5 || gamepad.buttons[13];
-                case 'left': return keyPressed || gamepad.leftStick.x < -0.5 || gamepad.buttons[14];
-                case 'right': return keyPressed || gamepad.leftStick.x > 0.5 || gamepad.buttons[15];
-                case 'action': return keyPressed || gamepad.buttons[0]; // A
-                case 'jump': return keyPressed || gamepad.buttons[1]; // B
-                case 'boost': return keyPressed || gamepad.buttons[5]; // RT
-                case 'brake': return keyPressed || gamepad.buttons[4]; // LT
+                case 'up': return this.touches['up'] || this.touches['swipe-up'];
+                case 'down': return this.touches['down'] || this.touches['swipe-down'];
+                case 'left': return this.touches['left'] || this.touches['swipe-left'];
+                case 'right': return this.touches['right'] || this.touches['swipe-right'];
             }
         }
         
-        return keyPressed;
+        // Mapping étendu des contrôles clavier (cache statique pour performance)
+        if (!this.keyMapCache) {
+            this.keyMapCache = {
+                'up': new Set(['z', 'w', 'arrowup', 'KeyW', 'KeyZ']),
+                'down': new Set(['s', 'arrowdown', 'KeyS']),
+                'left': new Set(['q', 'a', 'arrowleft', 'KeyA', 'KeyQ']),
+                'right': new Set(['d', 'arrowright', 'KeyD']),
+                'action': new Set([' ', 'space', 'enter', 'Space', 'Enter']),
+                'jump': new Set(['z', 'w', 'space', 'KeyW', 'KeyZ', 'Space']),
+                'boost': new Set(['shift', 'shiftleft', 'shiftright']),
+                'brake': new Set(['control', 'controlleft', 'controlright'])
+            };
+        }
+        
+        // Vérification des contrôles clavier
+        const keySet = this.keyMapCache[control];
+        if (keySet) {
+            for (const key of keySet) {
+                if (this.keys[key] || this.keys[key.toLowerCase()]) {
+                    return true;
+                }
+            }
+        }
+        
+        // Vérification de la manette de jeu (si nécessaire)
+        const gamepad = this.getGamepadInput();
+        if (gamepad) {
+            switch(control) {
+                case 'up': return gamepad.leftStick.y < -0.3 || gamepad.buttons[12];
+                case 'down': return gamepad.leftStick.y > 0.3 || gamepad.buttons[13];
+                case 'left': return gamepad.leftStick.x < -0.3 || gamepad.buttons[14];
+                case 'right': return gamepad.leftStick.x > 0.3 || gamepad.buttons[15];
+                case 'action': return gamepad.buttons[0]; // A
+                case 'jump': return gamepad.buttons[1]; // B
+                case 'boost': return gamepad.buttons[5]; // RT
+                case 'brake': return gamepad.buttons[4]; // LT
+            }
+        }
+        
+        return false;
     }
 
     getAnalogInput(control) {
@@ -334,6 +444,12 @@ class ControlManager {
                 z-index: 1000;
                 opacity: 0.85;
                 transition: opacity 0.3s ease;
+                /* Optimisations pour les performances tactiles */
+                touch-action: none;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+                will-change: transform;
             }
             
             #virtual-controls:hover {
@@ -343,6 +459,9 @@ class ControlManager {
             .dpad-container, .action-buttons {
                 position: relative;
                 pointer-events: all;
+                /* Optimisations tactiles */
+                touch-action: none;
+                will-change: transform;
             }
             
             .dpad {
@@ -361,7 +480,10 @@ class ControlManager {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: all 0.2s ease;
+                transition: transform 0.1s ease; /* Transition plus rapide */
+                /* Optimisations tactiles */
+                touch-action: none;
+                will-change: transform;
             }
             
             .dpad:active {
@@ -380,7 +502,7 @@ class ControlManager {
                 border-radius: 50%;
                 border: 1px solid rgba(0,242,254,0.5);
                 z-index: 1;
-                transition: all 0.2s ease;
+                transition: all 0.1s ease; /* Plus rapide */
             }
             
             .dpad button {
@@ -398,11 +520,15 @@ class ControlManager {
                 box-shadow: 
                     0 3px 8px rgba(0,0,0,0.4),
                     inset 0 1px 2px rgba(255,255,255,0.3);
-                transition: all 0.1s ease;
+                transition: all 0.05s ease; /* Très rapide pour la réactivité */
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 z-index: 2;
+                /* Optimisations pour les performances */
+                transform: translateZ(0); /* Force l'accélération matérielle */
+                will-change: transform, background;
+                cursor: pointer;
             }
             
             .dpad button:active,
@@ -423,6 +549,7 @@ class ControlManager {
             .btn-icon {
                 font-size: 16px;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                pointer-events: none;
             }
             
             .action-buttons {
@@ -441,12 +568,16 @@ class ControlManager {
                 touch-action: manipulation;
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
-                transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1); /* Plus rapide */
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
                 overflow: hidden;
+                /* Optimisations pour les performances */
+                transform: translateZ(0);
+                will-change: transform, background;
+                cursor: pointer;
             }
             
             .btn-action {
@@ -488,6 +619,7 @@ class ControlManager {
                 font-weight: bold;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.5);
                 letter-spacing: 0.5px;
+                pointer-events: none;
             }
             
             .back-btn {
