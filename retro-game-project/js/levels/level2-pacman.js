@@ -459,7 +459,7 @@ class PacmanGame extends BaseGame {
                 dot.glow += 0.1;
                 const glowSize = dot.size + Math.sin(dot.glow) * 2;
                 
-                if (this.spritesLoaded && this.sprites.dot && this.sprites.dot !== null && this.sprites.dot.complete && !this.sprites.dot.src.includes('broken')) {
+                if (this.spritesLoaded && this.sprites.dot && this.sprites.dot !== 'fallback' && this.sprites.dot.complete) {
                     // Utiliser le sprite
                     try {
                         this.ctx.save();
