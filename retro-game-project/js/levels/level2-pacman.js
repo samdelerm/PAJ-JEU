@@ -49,9 +49,12 @@ class PacmanGame extends BaseGame {
                 }
             };
             img.onerror = () => {
-                console.log(`Sprite ${fileName} non trouvé, utilisation du rendu par défaut`);
-                // Marquer comme "cassé" pour éviter les erreurs et utiliser le rendu de secours
-                this.sprites[fileName.replace('.png', '')] = 'fallback';
+                console.log(`Sprite ${fileName} non trouvé, génération d'un sprite de secours`);
+                // Générer un sprite de secours
+                const spriteType = fileName.replace('.png', '');
+                const generatedSprite = SpriteGenerator.generateSprite(spriteType, 32);
+                this.sprites[spriteType] = SpriteGenerator.createImageFromCanvas(generatedSprite);
+                
                 loadedCount++;
                 if (loadedCount === spriteFiles.length) {
                     this.spritesLoaded = true;
@@ -459,7 +462,7 @@ class PacmanGame extends BaseGame {
                 dot.glow += 0.1;
                 const glowSize = dot.size + Math.sin(dot.glow) * 2;
                 
-                if (this.spritesLoaded && this.sprites.dot && this.sprites.dot !== 'fallback' && this.sprites.dot.complete) {
+                if (this.spritesLoaded && this.sprites.dot && this.sprites.dot.complete) {
                     // Utiliser le sprite
                     try {
                         this.ctx.save();
@@ -493,7 +496,7 @@ class PacmanGame extends BaseGame {
             if (!pellet.collected) {
                 const pulseSize = 8 + Math.sin(pellet.pulse) * 4;
                 
-                if (this.spritesLoaded && this.sprites['power-pellet'] && this.sprites['power-pellet'] !== null && this.sprites['power-pellet'].complete) {
+                if (this.spritesLoaded && this.sprites['power-pellet'] && this.sprites['power-pellet'].complete) {
                     // Utiliser le sprite
                     try {
                         this.ctx.save();
@@ -533,7 +536,7 @@ class PacmanGame extends BaseGame {
             });
 
             // Corps de l'ennemi
-            if (this.spritesLoaded && this.sprites.ghost && this.sprites.ghost !== null && this.sprites.ghost.complete) {
+            if (this.spritesLoaded && this.sprites.ghost && this.sprites.ghost.complete) {
                 // Utiliser le sprite
                 try {
                     this.ctx.save();
@@ -589,7 +592,7 @@ class PacmanGame extends BaseGame {
                 'rgba(255, 215, 0, 0.4)');
         }
 
-        if (this.spritesLoaded && this.sprites.pacman && this.sprites.pacman !== null && this.sprites.pacman.complete) {
+        if (this.spritesLoaded && this.sprites.pacman && this.sprites.pacman.complete) {
             // Utiliser le sprite
             try {
                 this.ctx.save();
