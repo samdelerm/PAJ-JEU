@@ -76,7 +76,8 @@ class ControlManager {
         // Référence pour les contrôles analogiques (accessible aux jeux)
         this.touchJoystick = {
             active: false,
-            intensity: { x: 0, y: 0 }
+            intensity: { x: 0, y: 0 },
+            isDPadControl: false
         };
         
         this.setupControls();
@@ -442,7 +443,7 @@ class ControlManager {
         const controlsHTML = `
             <div id="virtual-controls">
                 <div class="dpad-container">
-                    <div class="dpad">
+                    <div class="dpad" id="analog-joystick">
                         <button data-control="up" class="btn-up">
                             <span class="btn-icon">▲</span>
                         </button>
@@ -455,7 +456,7 @@ class ControlManager {
                         <button data-control="right" class="btn-right">
                             <span class="btn-icon">▶</span>
                         </button>
-                        <div class="dpad-center"></div>
+                        <div class="dpad-center" id="joystick-knob"></div>
                     </div>
                 </div>
                 <div class="action-buttons">
@@ -481,25 +482,118 @@ class ControlManager {
             backBtn.addEventListener('click', () => this.backToMenu());
         }
 
+        // Support du joystick analogique sur le D-Pad
+        const dpad = document.getElementById('analog-joystick');
+        if (dpad) {
+            this.setupAnalogJoystick(dpad);
+        }
+
         // Effets visuels et sonores pour les boutons
-        const buttons = document.querySelectorAll('#virtual-controls button');
+        const buttons = document.querySelectorAll('#virtual-controls button[data-control]');
         buttons.forEach(btn => {
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                this.touches[btn.dataset.control] = true;
                 btn.classList.add('pressed');
                 this.hapticFeedback('light');
             });
 
             btn.addEventListener('touchend', (e) => {
                 e.preventDefault();
+                this.touches[btn.dataset.control] = false;
                 btn.classList.remove('pressed');
             });
 
             btn.addEventListener('touchcancel', (e) => {
                 e.preventDefault();
+                this.touches[btn.dataset.control] = false;
                 btn.classList.remove('pressed');
             });
         });
+    }
+
+    setupAnalogJoystick(dpad) {
+        const knob = document.getElementById('joystick-knob');
+        let isActive = false;
+        let centerX = 0;
+        let centerY = 0;
+
+        const startJoystick = (e) => {
+            e.preventDefault();
+            const rect = dpad.getBoundingClientRect();
+            centerX = rect.left + rect.width / 2;
+            centerY = rect.top + rect.height / 2;
+            
+            isActive = true;
+            this.touchJoystick.active = true;
+            this.touchJoystick.isDPadControl = true;
+            
+            dpad.style.transform = 'scale(1.05)';
+            this.hapticFeedback('medium');
+        };
+
+        const moveJoystick = (e) => {
+            if (!isActive) return;
+            e.preventDefault();
+
+            const touch = e.touches ? e.touches[0] : e;
+            const deltaX = touch.clientX - centerX;
+            const deltaY = touch.clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            const maxDistance = 45; // Rayon maximum du joystick
+            const clampedDistance = Math.min(distance, maxDistance);
+            
+            // Calculer l'intensité analogique
+            const intensityX = deltaX / maxDistance;
+            const intensityY = deltaY / maxDistance;
+            
+            // Appliquer zone morte
+            const deadZone = 0.15;
+            this.touchJoystick.intensity.x = Math.abs(intensityX) > deadZone ? intensityX : 0;
+            this.touchJoystick.intensity.y = Math.abs(intensityY) > deadZone ? intensityY : 0;
+            
+            // Déplacer visuellement le knob
+            const knobX = (deltaX / maxDistance) * 30;
+            const knobY = (deltaY / maxDistance) * 30;
+            knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+            
+            // Mettre à jour les contrôles digitaux aussi
+            this.touches.left = this.touchJoystick.intensity.x < -0.3;
+            this.touches.right = this.touchJoystick.intensity.x > 0.3;
+            this.touches.up = this.touchJoystick.intensity.y < -0.3;
+            this.touches.down = this.touchJoystick.intensity.y > 0.3;
+        };
+
+        const endJoystick = (e) => {
+            if (!isActive) return;
+            e.preventDefault();
+            
+            isActive = false;
+            this.touchJoystick.active = false;
+            this.touchJoystick.isDPadControl = false;
+            this.touchJoystick.intensity = { x: 0, y: 0 };
+            
+            // Reset visuel
+            dpad.style.transform = '';
+            knob.style.transform = '';
+            
+            // Reset contrôles digitaux
+            this.touches.left = false;
+            this.touches.right = false;
+            this.touches.up = false;
+            this.touches.down = false;
+        };
+
+        // Événements tactiles
+        dpad.addEventListener('touchstart', startJoystick, { passive: false });
+        dpad.addEventListener('touchmove', moveJoystick, { passive: false });
+        dpad.addEventListener('touchend', endJoystick, { passive: false });
+        
+        // Événements souris pour les tests
+        dpad.addEventListener('mousedown', startJoystick);
+        document.addEventListener('mousemove', moveJoystick);
+        document.addEventListener('mouseup', endJoystick);
     }
 
     addVirtualControlsCSS() {
@@ -572,11 +666,39 @@ class ControlManager {
                 position: absolute;
                 width: 20px;
                 height: 20px;
-                background: radial-gradient(circle, rgba(0,242,254,0.6) 0%, rgba(0,150,200,0.3) 100%);
+                background: radial-gradient(circle, rgba(0,242,254,0.8) 0%, rgba(0,150,200,0.5) 100%);
                 border-radius: 50%;
-                border: 1px solid rgba(0,242,254,0.5);
-                z-index: 1;
-                transition: all 0.1s ease; /* Plus rapide */
+                border: 1px solid rgba(0,242,254,0.8);
+                z-index: 2;
+                transition: all 0.1s ease;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                box-shadow: 0 0 10px rgba(0,242,254,0.5);
+            }
+            
+            #analog-joystick {
+                position: relative;
+                overflow: visible;
+            }
+            
+            #joystick-knob {
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                background: radial-gradient(circle, rgba(0,242,254,0.9) 0%, rgba(0,150,200,0.7) 100%);
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.8);
+                z-index: 3;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                box-shadow: 
+                    0 0 15px rgba(0,242,254,0.6),
+                    inset 0 2px 5px rgba(255,255,255,0.3);
+                transition: box-shadow 0.1s ease;
             }
             
             .dpad button {

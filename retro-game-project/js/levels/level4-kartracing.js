@@ -293,13 +293,13 @@ class KartingGame extends BaseGame {
         if (this.controls.isPressed('up')) forward = 1;
         if (this.controls.isPressed('down')) backward = 1;
         
-        // Contrôles tactiles analogiques (si disponibles)
+        // Contrôles tactiles analogiques (nouveau système)
         if (this.gameEngine && this.gameEngine.controlManager) {
             const manager = this.gameEngine.controlManager;
             
-            // Vérifier si on a des contrôles tactiles actifs
+            // Vérifier si on a des contrôles tactiles analogiques actifs
             if (manager.touchJoystick && manager.touchJoystick.active) {
-                const intensity = manager.touchJoystick.intensity || { x: 0, y: 0 };
+                const intensity = manager.touchJoystick.intensity;
                 
                 // Appliquer une courbe de réponse pour un contrôle plus naturel
                 horizontal = Math.sign(intensity.x) * Math.pow(Math.abs(intensity.x), 1.2);
@@ -309,6 +309,11 @@ class KartingGame extends BaseGame {
                 } else if (intensity.y > 0) {
                     backward = Math.pow(intensity.y, 1.2);
                 }
+                
+                // Limiter les valeurs entre -1 et 1
+                horizontal = Math.max(-1, Math.min(1, horizontal));
+                forward = Math.max(0, Math.min(1, forward));
+                backward = Math.max(0, Math.min(1, backward));
             }
         }
         
