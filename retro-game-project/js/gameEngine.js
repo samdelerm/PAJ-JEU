@@ -134,10 +134,34 @@ class ControlManager {
         e.preventDefault();
         e.stopPropagation();
         
-        // Traitement plus rapide avec requestAnimationFrame pour éviter les blocages
-        requestAnimationFrame(() => {
+        // Traitement immédiat pour améliorer la réactivité sur Android
+        const processTouches = () => {
             for (let touch of e.changedTouches) {
-                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                // Utiliser des coordonnées plus précises
+                const rect = document.documentElement.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                // Méthode plus robuste pour détecter l'élément touché
+                let element = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Si pas d'élément direct, chercher dans un rayon plus large
+                if (!element || !element.dataset?.control) {
+                    const radius = 25; // Rayon de recherche élargi
+                    for (let offsetX = -radius; offsetX <= radius; offsetX += 10) {
+                        for (let offsetY = -radius; offsetY <= radius; offsetY += 10) {
+                            const testElement = document.elementFromPoint(
+                                touch.clientX + offsetX, 
+                                touch.clientY + offsetY
+                            );
+                            if (testElement?.dataset?.control) {
+                                element = testElement;
+                                break;
+                            }
+                        }
+                        if (element?.dataset?.control) break;
+                    }
+                }
                 
                 if (element && element.dataset && element.dataset.control) {
                     const control = element.dataset.control;
@@ -154,17 +178,22 @@ class ControlManager {
                             timestamp: performance.now()
                         };
                         
-                        // Feedback visuel immédiat
+                        // Feedback visuel et haptique immédiat
                         element.classList.add('pressed');
+                        element.style.transform = 'scale(0.95) translateZ(0)';
                         this.hapticFeedback('light');
                     } else {
                         // Nettoyage des données de touch
                         delete this.touchPositions[touch.identifier];
                         element.classList.remove('pressed');
+                        element.style.transform = '';
                     }
                 }
             }
-        });
+        };
+        
+        // Exécution immédiate pour Android
+        processTouches();
     }
 
     handleTouchMove(e) {
@@ -298,6 +327,7 @@ class ControlManager {
                 case 'down': return this.touches['down'] || this.touches['swipe-down'];
                 case 'left': return this.touches['left'] || this.touches['swipe-left'];
                 case 'right': return this.touches['right'] || this.touches['swipe-right'];
+                case 'jump': return this.touches['action'] || this.touches['jump']; // Unifier jump et action
             }
         }
         
@@ -379,14 +409,8 @@ class ControlManager {
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <button data-control="boost" class="btn-boost">
-                        <span class="btn-label">BOOST</span>
-                    </button>
                     <button data-control="action" class="btn-action">
-                        <span class="btn-label">A</span>
-                    </button>
-                    <button data-control="jump" class="btn-jump">
-                        <span class="btn-label">B</span>
+                        <span class="btn-label">SAUT</span>
                     </button>
                 </div>
                 <button id="back-to-menu" class="back-btn">
@@ -442,7 +466,7 @@ class ControlManager {
                 padding: 0 12px;
                 pointer-events: none;
                 z-index: 1000;
-                opacity: 0.85;
+                opacity: 0.9; /* Plus visible sur Android */
                 transition: opacity 0.3s ease;
                 /* Optimisations pour les performances tactiles */
                 touch-action: none;
@@ -557,18 +581,19 @@ class ControlManager {
                 flex-direction: column;
                 gap: 8px;
                 align-items: center;
+                justify-content: center;
             }
             
             .action-buttons button {
-                width: 50px;
-                height: 50px;
+                width: 60px;
+                height: 60px;
                 border-radius: 50%;
                 border: 2px solid rgba(255,255,255,0.2);
                 user-select: none;
                 touch-action: manipulation;
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
-                transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1); /* Plus rapide */
+                transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -581,28 +606,10 @@ class ControlManager {
             }
             
             .btn-action {
-                background: linear-gradient(135deg, rgba(255,65,54,0.9) 0%, rgba(220,38,38,0.8) 100%);
-                box-shadow: 
-                    0 4px 12px rgba(255,65,54,0.4),
-                    inset 0 1px 3px rgba(255,255,255,0.2);
-            }
-            
-            .btn-jump {
                 background: linear-gradient(135deg, rgba(34,197,94,0.9) 0%, rgba(22,163,74,0.8) 100%);
                 box-shadow: 
                     0 4px 12px rgba(34,197,94,0.4),
                     inset 0 1px 3px rgba(255,255,255,0.2);
-            }
-            
-            .btn-boost {
-                background: linear-gradient(135deg, rgba(168,85,247,0.9) 0%, rgba(139,69,209,0.8) 100%);
-                box-shadow: 
-                    0 4px 12px rgba(168,85,247,0.4),
-                    inset 0 1px 3px rgba(255,255,255,0.2);
-                width: 45px;
-                height: 30px;
-                border-radius: 15px;
-                margin-bottom: 5px;
             }
             
             .action-buttons button:active,
@@ -699,12 +706,8 @@ class ControlManager {
                 .btn-left { top: 33px; left: 5px; }
                 .btn-right { top: 33px; right: 5px; }
                 .action-buttons button {
-                    width: 45px;
-                    height: 45px;
-                }
-                .btn-boost {
-                    width: 40px;
-                    height: 25px;
+                    width: 55px;
+                    height: 55px;
                 }
             }
             
