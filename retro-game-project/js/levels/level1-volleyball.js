@@ -2,7 +2,7 @@ class VolleyballGame extends BaseGame {
     constructor(canvas, ctx) {
         super(canvas, ctx);
         this.ball = { 
-            x: 400, y: 300, vx: 1.5, vy: -1, radius: 15, // Vitesse réduite
+            x: 400, y: 300, vx: 1, vy: -0.8, radius: 15, // Vitesse encore plus réduite
             trail: [], rotation: 0
         };
         this.player1 = { 
@@ -122,7 +122,7 @@ class VolleyballGame extends BaseGame {
 
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
-        this.ball.vy += 0.2; // Gravité réduite encore plus pour un jeu plus lent
+        this.ball.vy += 0.15; // Gravité encore plus réduite pour un jeu très lent
         this.ball.rotation += 0.15;
 
         // Collision avec le sol
@@ -138,16 +138,16 @@ class VolleyballGame extends BaseGame {
 
         // Collision avec les bords
         if (this.ball.x < 15 || this.ball.x > 785) {
-            this.ball.vx *= -0.7; // Réduction de vitesse plus importante
+            this.ball.vx *= -0.5; // Réduction de vitesse encore plus importante
             this.createWaterSplash(this.ball.x < 400 ? 15 : 785, this.ball.y);
         }
         if (this.ball.y < 15) {
-            this.ball.vy *= -0.6; // Réduction de vitesse plus importante
+            this.ball.vy *= -0.4; // Réduction de vitesse encore plus importante
         }
 
         // Collision avec le filet
         if (this.ball.x > 380 && this.ball.x < 420 && this.ball.y > 420) {
-            this.ball.vx *= -0.8; // Réduction de vitesse
+            this.ball.vx *= -0.6; // Réduction de vitesse plus importante
             this.ball.vy *= 0.7;
         }
 
@@ -186,7 +186,7 @@ class VolleyballGame extends BaseGame {
             const horizontalPower = power * targetDirection;
             const verticalPower = upwardForce + Math.random() * -2; // Variation réduite
             
-            this.ball.vx = horizontalPower + Math.random() * 1 - 0.5; // Variation encore plus réduite
+            this.ball.vx = horizontalPower + Math.random() * 0.6 - 0.3; // Variation très réduite pour plus de contrôle
             this.ball.vy = verticalPower;
             
             this.createHitParticles(this.ball.x, this.ball.y, player.color);
@@ -275,7 +275,7 @@ class VolleyballGame extends BaseGame {
     resetBall() {
         this.ball.x = 400;
         this.ball.y = 300;
-        this.ball.vx = Math.random() > 0.5 ? 1.5 : -1.5; // Vitesse initiale encore plus réduite
+        this.ball.vx = Math.random() > 0.5 ? 1 : -1; // Vitesse initiale très réduite
         this.ball.vy = -2; // Vitesse verticale réduite
         this.ball.trail = [];
         this.ball.rotation = 0;

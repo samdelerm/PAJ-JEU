@@ -6,7 +6,7 @@ class KartingGame extends BaseGame {
         this.player = {
             x: 150, y: 280, width: 28, height: 16,
             vx: 0, vy: 0, angle: 0, speed: 0,
-            maxSpeed: 12, acceleration: 0.4, friction: 0.92,
+            maxSpeed: 8, acceleration: 0.3, friction: 0.92, // Vitesse réduite
             color: '#FF4444', name: 'JOUEUR', trail: [],
             boost: 0, shield: 0, lap: 1, checkpointIndex: 0,
             lapTime: 0, bestLap: Infinity, position: 1
@@ -126,8 +126,8 @@ class KartingGame extends BaseGame {
             this.opponents.push({
                 x: 120 - (i * 30), y: 280 + (i * 25), width: 28, height: 16,
                 vx: 0, vy: 0, angle: 0, speed: 0,
-                maxSpeed: 8 + data.skill * 4, 
-                acceleration: 0.3 + data.skill * 0.2, 
+                maxSpeed: 6 + data.skill * 2.5, // Vitesse IA réduite
+                acceleration: 0.25 + data.skill * 0.15, // Accélération IA réduite 
                 friction: 0.92,
                 color: data.color, name: data.name, trail: [],
                 boost: 0, shield: 0, lap: 1, checkpointIndex: 0,
@@ -270,7 +270,7 @@ class KartingGame extends BaseGame {
         
         if (this.controls.isPressed('action') && this.player.boost > 0) {
             this.player.boost -= 1;
-            this.player.speed = Math.min(this.player.speed + 0.5, this.player.maxSpeed * 1.4);
+            this.player.speed = Math.min(this.player.speed + 0.3, this.player.maxSpeed * 1.2); // Boost réduit
         }
     }
 

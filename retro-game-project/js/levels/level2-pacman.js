@@ -13,6 +13,13 @@ class PacmanGame extends BaseGame {
         this.particles = [];
         this.campfire = { x: 400, y: 300, flames: [] };
         
+        // Système de progression
+        this.waveNumber = 1;
+        this.maxEnemies = 5;
+        this.currentEnemyCount = 1; // Commencer avec 1 ennemi
+        this.dotsCollected = 0;
+        this.totalDots = 0;
+        
         // Sprites
         this.sprites = {};
         this.spritesLoaded = false;
@@ -67,6 +74,7 @@ class PacmanGame extends BaseGame {
 
     initLevel() {
         // Créer une grille de points plus organisée
+        this.dots = []; // Réinitialiser
         for (let x = 80; x < 720; x += 60) {
             for (let y = 80; y < 520; y += 60) {
                 if (Math.random() > 0.2) {
@@ -78,6 +86,8 @@ class PacmanGame extends BaseGame {
                 }
             }
         }
+        this.totalDots = this.dots.length;
+        this.dotsCollected = 0;
 
         // Power pellets spéciaux
         this.powerPellets = [
@@ -87,16 +97,24 @@ class PacmanGame extends BaseGame {
             { x: 700, y: 500, collected: false, pulse: 0 }
         ];
 
-        // Ennemis avec IA améliorée
-        const enemyColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
-        for (let i = 0; i < 4; i++) {
+        // Commencer avec 1 ennemi, puis augmenter de manière exponentielle
+        this.initEnemies();
+    }
+
+    initEnemies() {
+        // Vider la liste d'ennemis
+        this.enemies = [];
+        
+        // Ennemis avec IA améliorée - nombre basé sur currentEnemyCount
+        const enemyColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF', '#FF8A80'];
+        for (let i = 0; i < this.currentEnemyCount; i++) {
             this.enemies.push({
                 x: 200 + i * 120,
                 y: 200 + Math.random() * 200,
                 vx: (Math.random() - 0.5) * 3,
                 vy: (Math.random() - 0.5) * 3,
                 size: 20,
-                color: enemyColors[i],
+                color: enemyColors[i % enemyColors.length],
                 scared: false,
                 scaredTimer: 0,
                 eyes: { x: 0, y: 0 },
@@ -208,9 +226,23 @@ class PacmanGame extends BaseGame {
             enemy.x += enemy.vx;
             enemy.y += enemy.vy;
 
-            // Rebonds sur les bords
-            if (enemy.x < 25 || enemy.x > 775) enemy.vx *= -1;
-            if (enemy.y < 25 || enemy.y > 575) enemy.vy *= -1;
+            // Forcer les ennemis à rester dans la zone de jeu avec des limites strictes
+            if (enemy.x < 25) {
+                enemy.x = 25;
+                enemy.vx = Math.abs(enemy.vx);
+            }
+            if (enemy.x > 775) {
+                enemy.x = 775;
+                enemy.vx = -Math.abs(enemy.vx);
+            }
+            if (enemy.y < 25) {
+                enemy.y = 25;
+                enemy.vy = Math.abs(enemy.vy);
+            }
+            if (enemy.y > 575) {
+                enemy.y = 575;
+                enemy.vy = -Math.abs(enemy.vy);
+            }
 
             // Trail des ennemis
             enemy.trail.push({ x: enemy.x, y: enemy.y, alpha: 1 });
@@ -230,11 +262,63 @@ class PacmanGame extends BaseGame {
                 const dist = Math.sqrt((this.player.x - dot.x) ** 2 + (this.player.y - dot.y) ** 2);
                 if (dist < 25) {
                     dot.collected = true;
+                    this.dotsCollected++;
                     this.score += 10;
                     this.createCollectParticles(dot.x, dot.y);
+                    
+                    // Vérifier si tous les marshmallows sont collectés
+                    this.checkForWaveCompletion();
                 }
             }
         });
+    }
+
+    checkForWaveCompletion() {
+        const dotsLeft = this.dots.filter(d => !d.collected).length;
+        
+        if (dotsLeft === 0) {
+            // Tous les marshmallows collectés - nouvelle vague
+            this.waveNumber++;
+            this.score += 100 * this.waveNumber; // Bonus de vague
+            
+            // Augmenter le nombre d'ennemis de manière exponentielle (max 5)
+            if (this.currentEnemyCount < this.maxEnemies) {
+                this.currentEnemyCount = Math.min(this.currentEnemyCount + 1, this.maxEnemies);
+            }
+            
+            // Régénérer tous les marshmallows
+            this.regenerateDots();
+            
+            // Créer les nouveaux ennemis
+            this.initEnemies();
+            
+            // Effets visuels de nouvelle vague
+            this.createWaveParticles();
+        }
+    }
+
+    regenerateDots() {
+        // Remettre tous les dots à l'état non collecté
+        this.dots.forEach(dot => {
+            dot.collected = false;
+            dot.glow = Math.random() * Math.PI * 2; // Nouveau scintillement
+        });
+        this.dotsCollected = 0;
+    }
+
+    createWaveParticles() {
+        // Explosion de particules pour célébrer la nouvelle vague
+        for (let i = 0; i < 20; i++) {
+            this.particles.push({
+                x: 400,
+                y: 300,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                life: 60,
+                color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                size: 3 + Math.random() * 5
+            });
+        }
     }
 
     checkPowerPelletCollision() {
@@ -656,7 +740,7 @@ class PacmanGame extends BaseGame {
 
     renderUI() {
         // Panneau de score avec style camping
-        this.drawRoundedRect(10, 10, 200, 60, 10, 'rgba(139, 69, 19, 0.8)');
+        this.drawRoundedRect(10, 10, 250, 80, 10, 'rgba(139, 69, 19, 0.8)');
         
         this.drawText(`Score: ${this.score}`, 20, 25, {
             font: 'bold 20px Arial',
@@ -668,6 +752,16 @@ class PacmanGame extends BaseGame {
         this.drawText(`Marshmallows: ${dotsLeft}`, 20, 45, {
             font: '14px Arial',
             color: '#FFE4E1'
+        });
+        
+        this.drawText(`Vague: ${this.waveNumber}`, 20, 65, {
+            font: 'bold 16px Arial',
+            color: '#FFA500'
+        });
+        
+        this.drawText(`Ennemis: ${this.currentEnemyCount}/${this.maxEnemies}`, 140, 65, {
+            font: 'bold 14px Arial',
+            color: '#FF6B6B'
         });
 
         // Mode pouvoir
