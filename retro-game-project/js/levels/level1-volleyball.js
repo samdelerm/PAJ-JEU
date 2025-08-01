@@ -2,7 +2,7 @@ class VolleyballGame extends BaseGame {
     constructor(canvas, ctx) {
         super(canvas, ctx);
         this.ball = { 
-            x: 400, y: 300, vx: 1, vy: -0.8, radius: 15, // Vitesse encore plus réduite
+            x: 400, y: 300, vx: 0.5, vy: -0.4, radius: 15, // Vitesses divisées par 2
             trail: [], rotation: 0
         };
         this.player1 = { 
@@ -75,7 +75,7 @@ class VolleyballGame extends BaseGame {
 
     updateAI() {
         const ballDistance = Math.abs(this.ball.x - (this.player2.x + 20));
-        const speed = 3;
+        const speed = 1.5; // Diviser par 2
 
         // IA plus intelligente
         if (this.ball.x > 400) {
@@ -122,7 +122,7 @@ class VolleyballGame extends BaseGame {
 
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
-        this.ball.vy += 0.15; // Gravité encore plus réduite pour un jeu très lent
+        this.ball.vy += 0.075; // Gravité divisée par 2
         this.ball.rotation += 0.15;
 
         // Collision avec le sol
@@ -275,7 +275,7 @@ class VolleyballGame extends BaseGame {
     resetBall() {
         this.ball.x = 400;
         this.ball.y = 300;
-        this.ball.vx = Math.random() > 0.5 ? 1 : -1; // Vitesse initiale très réduite
+        this.ball.vx = Math.random() > 0.5 ? 0.5 : -0.5; // Vitesse initiale divisée par 2
         this.ball.vy = -2; // Vitesse verticale réduite
         this.ball.trail = [];
         this.ball.rotation = 0;

@@ -253,25 +253,66 @@ class KartingGame extends BaseGame {
     }
 
     handlePlayerInput() {
-        if (this.controls.isPressed('up')) {
-            this.player.speed = Math.min(this.player.speed + this.player.acceleration, this.player.maxSpeed);
-        } else if (this.controls.isPressed('down')) {
-            this.player.speed = Math.max(this.player.speed - this.player.acceleration * 1.5, -this.player.maxSpeed * 0.5);
+        // Système de joystick analogique pour les contrôles
+        const joystickState = this.getJoystickInput();
+        
+        // Accélération/freinage analogique
+        if (joystickState.forward > 0.1) {
+            const accelForce = this.player.acceleration * joystickState.forward;
+            this.player.speed = Math.min(this.player.speed + accelForce, this.player.maxSpeed);
+        } else if (joystickState.backward > 0.1) {
+            const brakeForce = this.player.acceleration * 1.5 * joystickState.backward;
+            this.player.speed = Math.max(this.player.speed - brakeForce, -this.player.maxSpeed * 0.5);
         } else {
             this.player.speed *= this.player.friction;
         }
         
-        if (this.controls.isPressed('left') && Math.abs(this.player.speed) > 0.5) {
-            this.player.angle -= 0.08;
-        }
-        if (this.controls.isPressed('right') && Math.abs(this.player.speed) > 0.5) {
-            this.player.angle += 0.08;
+        // Direction analogique avec courbe de sensibilité
+        if (Math.abs(joystickState.horizontal) > 0.1 && Math.abs(this.player.speed) > 0.5) {
+            const turnRate = 0.08 * Math.abs(joystickState.horizontal); // Intensité variable
+            const speedFactor = Math.abs(this.player.speed) / this.player.maxSpeed + 0.3;
+            this.player.angle += joystickState.horizontal * turnRate * speedFactor;
         }
         
+        // Boost (touche d'action)
         if (this.controls.isPressed('action') && this.player.boost > 0) {
             this.player.boost -= 1;
-            this.player.speed = Math.min(this.player.speed + 0.3, this.player.maxSpeed * 1.2); // Boost réduit
+            this.player.speed = Math.min(this.player.speed + 0.15, this.player.maxSpeed * 1.2); // Boost réduit par 2
         }
+    }
+
+    getJoystickInput() {
+        // Détecter les entrées du joystick virtuel mobile ou clavier
+        let horizontal = 0;
+        let forward = 0;
+        let backward = 0;
+        
+        // Contrôles clavier classiques
+        if (this.controls.isPressed('left')) horizontal = -1;
+        if (this.controls.isPressed('right')) horizontal = 1;
+        if (this.controls.isPressed('up')) forward = 1;
+        if (this.controls.isPressed('down')) backward = 1;
+        
+        // Contrôles tactiles analogiques (si disponibles)
+        if (this.gameEngine && this.gameEngine.controlManager) {
+            const manager = this.gameEngine.controlManager;
+            
+            // Vérifier si on a des contrôles tactiles actifs
+            if (manager.touchJoystick && manager.touchJoystick.active) {
+                const intensity = manager.touchJoystick.intensity || { x: 0, y: 0 };
+                
+                // Appliquer une courbe de réponse pour un contrôle plus naturel
+                horizontal = Math.sign(intensity.x) * Math.pow(Math.abs(intensity.x), 1.2);
+                
+                if (intensity.y < 0) {
+                    forward = Math.pow(Math.abs(intensity.y), 1.2);
+                } else if (intensity.y > 0) {
+                    backward = Math.pow(intensity.y, 1.2);
+                }
+            }
+        }
+        
+        return { horizontal, forward, backward };
     }
 
     updateOpponents(deltaTime) {
@@ -359,10 +400,10 @@ class KartingGame extends BaseGame {
             targetSpeed *= 0.7;
         }
         
-        // Utilisation des power-ups par l'IA
+        // Utilisation des power-ups par l'IA (boost réduit par 2)
         if (opponent.boost > 0 && Math.random() < 0.1) {
             opponent.boost -= 5;
-            targetSpeed *= 1.3;
+            targetSpeed *= 1.15; // Boost IA réduit (1.3→1.15)
         }
         
         // Accélération progressive

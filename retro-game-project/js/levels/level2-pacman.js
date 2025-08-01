@@ -205,8 +205,8 @@ class PacmanGame extends BaseGame {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0) {
-                    enemy.vx = (dx / distance) * 2;
-                    enemy.vy = (dy / distance) * 2;
+                    enemy.vx = (dx / distance) * 1; // Vitesse divisée par 2 (2→1)
+                    enemy.vy = (dy / distance) * 1;
                 }
                 
                 enemy.scaredTimer--;
@@ -218,8 +218,8 @@ class PacmanGame extends BaseGame {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0 && distance < 150) {
-                    enemy.vx = (dx / distance) * 1.5;
-                    enemy.vy = (dy / distance) * 1.5;
+                    enemy.vx = (dx / distance) * 0.75; // Vitesse divisée par 2 (1.5→0.75)
+                    enemy.vy = (dy / distance) * 0.75;
                 }
             }
 

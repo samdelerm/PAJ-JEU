@@ -63,6 +63,22 @@ class ControlManager {
         this.touchThreshold = 15; // Seuil de détection plus bas
         this.lastTouchTime = 0;
         this.touchDebounce = 16; // ~60fps
+        
+        // Support du joystick analogique
+        this.joystickState = {
+            active: false,
+            center: { x: 0, y: 0 },
+            current: { x: 0, y: 0 },
+            intensity: { x: 0, y: 0 },
+            maxRadius: 50
+        };
+        
+        // Référence pour les contrôles analogiques (accessible aux jeux)
+        this.touchJoystick = {
+            active: false,
+            intensity: { x: 0, y: 0 }
+        };
+        
         this.setupControls();
         this.createVirtualControls();
         this.setupGamepad();
@@ -200,13 +216,20 @@ class ControlManager {
         e.preventDefault();
         e.stopPropagation();
         
-        // Traitement optimisé des mouvements
+        // Traitement optimisé des mouvements avec support joystick analogique
         for (let touch of e.changedTouches) {
             const touchData = this.touchPositions[touch.identifier];
             if (touchData) {
                 const deltaX = touch.clientX - touchData.x;
                 const deltaY = touch.clientY - touchData.y;
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                
+                // Mise à jour du joystick analogique si c'est un contrôle directionnel
+                if (touchData.control === 'left' || touchData.control === 'right' || 
+                    touchData.control === 'up' || touchData.control === 'down') {
+                    
+                    this.updateJoystickAnalog(touchData, touch, deltaX, deltaY, distance);
+                }
                 
                 // Seuil plus bas pour des gestes plus réactifs
                 if (distance > 20) {
@@ -235,6 +258,33 @@ class ControlManager {
                 }
             }
         }
+    }
+
+    updateJoystickAnalog(touchData, touch, deltaX, deltaY, distance) {
+        // Calculer l'intensité analogique basée sur la distance du centre
+        const maxDistance = 50; // Distance maximale pour l'intensité complète
+        const normalizedDistance = Math.min(distance / maxDistance, 1.0);
+        
+        // Calculer l'intensité avec courbe de réponse
+        const intensityX = Math.sign(deltaX) * Math.pow(Math.abs(deltaX) / maxDistance, 0.8);
+        const intensityY = Math.sign(deltaY) * Math.pow(Math.abs(deltaY) / maxDistance, 0.8);
+        
+        // Appliquer une zone morte
+        const deadZone = 0.15;
+        const clampedX = Math.abs(intensityX) > deadZone ? intensityX : 0;
+        const clampedY = Math.abs(intensityY) > deadZone ? intensityY : 0;
+        
+        // Mettre à jour l'état du joystick
+        this.touchJoystick.active = normalizedDistance > deadZone;
+        this.touchJoystick.intensity = {
+            x: Math.max(-1, Math.min(1, clampedX)),
+            y: Math.max(-1, Math.min(1, clampedY))
+        };
+        
+        this.joystickState.active = this.touchJoystick.active;
+        this.joystickState.center = { x: touchData.x, y: touchData.y };
+        this.joystickState.current = { x: touch.clientX, y: touch.clientY };
+        this.joystickState.intensity = this.touchJoystick.intensity;
     }
 
     handleSwipeGesture(angle, distance) {
