@@ -37,35 +37,62 @@ class PacmanGame extends BaseGame {
     }
 
     loadSprites() {
-        const spriteFiles = [
-            'pacman.png',
-            'ghost.png',
-            'dot.png',
-            'power-pellet.png'
+        // Charger pacman.png pour le joueur
+        const pacmanImg = new Image();
+        pacmanImg.onload = () => { this.spritesLoaded = true; };
+        pacmanImg.onerror = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const generated = SpriteGenerator.generateDefault(ctx, 32);
+            this.sprites.pacman = SpriteGenerator.createImageFromCanvas(generated);
+            this.spritesLoaded = true;
+        };
+        pacmanImg.src = 'assets/sprites/pacman.png';
+        this.sprites.pacman = pacmanImg;
+
+        // Charger tous les PNG d'ennemis disponibles (hors pacman.png)
+        this.enemySpriteFiles = [
+            '1000017776.png',
+            '1000017777.png',
+            '1000017778.png',
+            '1000017779.png',
+            'ghost.png'
         ];
-        
-        let loadedCount = 0;
-        
-        spriteFiles.forEach(fileName => {
+        this.sprites.enemy = [];
+        let loaded = 0;
+        this.enemySpriteFiles.forEach((file, idx) => {
             const img = new Image();
             img.onload = () => {
-                console.log(`Sprite ${fileName} chargé avec succès`);
-                loadedCount++;
-                if (loadedCount === spriteFiles.length) {
-                    this.spritesLoaded = true;
-                }
+                loaded++;
+                if (loaded === this.enemySpriteFiles.length) this.spritesLoaded = true;
             };
             img.onerror = () => {
-                console.log(`Sprite ${fileName} non trouvé, génération d'un sprite de secours`);
-                // Générer un sprite de secours
+                const canvas = document.createElement('canvas');
+                canvas.width = 32; canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                const generated = SpriteGenerator.generateGhost(ctx, 32);
+                this.sprites.enemy[idx] = SpriteGenerator.createImageFromCanvas(generated);
+                loaded++;
+                if (loaded === this.enemySpriteFiles.length) this.spritesLoaded = true;
+            };
+            img.src = `assets/sprites/${file}`;
+            this.sprites.enemy[idx] = img;
+        });
+        // Charger les autres sprites (dot, power-pellet)
+        ['dot.png', 'power-pellet.png'].forEach(fileName => {
+            const img = new Image();
+            img.onload = () => {};
+            img.onerror = () => {
                 const spriteType = fileName.replace('.png', '');
-                const generatedSprite = SpriteGenerator.generateSprite(spriteType, 32);
+                const canvas = document.createElement('canvas');
+                canvas.width = 32; canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                let generatedSprite;
+                if (spriteType === 'dot') generatedSprite = SpriteGenerator.generateDot(ctx, 32);
+                else if (spriteType === 'power-pellet') generatedSprite = SpriteGenerator.generatePowerPellet(ctx, 32);
+                else generatedSprite = SpriteGenerator.generateDefault(ctx, 32);
                 this.sprites[spriteType] = SpriteGenerator.createImageFromCanvas(generatedSprite);
-                
-                loadedCount++;
-                if (loadedCount === spriteFiles.length) {
-                    this.spritesLoaded = true;
-                }
             };
             img.src = `assets/sprites/${fileName}`;
             this.sprites[fileName.replace('.png', '')] = img;
@@ -106,7 +133,6 @@ class PacmanGame extends BaseGame {
         this.enemies = [];
         
         // Ennemis avec IA améliorée - nombre basé sur currentEnemyCount
-        const enemyColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF', '#FF8A80'];
         for (let i = 0; i < this.currentEnemyCount; i++) {
             this.enemies.push({
                 x: 200 + i * 120,
@@ -114,7 +140,7 @@ class PacmanGame extends BaseGame {
                 vx: (Math.random() - 0.5) * 3,
                 vy: (Math.random() - 0.5) * 3,
                 size: 20,
-                color: enemyColors[i % enemyColors.length],
+                spriteIndex: i % (this.sprites.enemy ? this.sprites.enemy.length : 1),
                 scared: false,
                 scaredTimer: 0,
                 eyes: { x: 0, y: 0 },
@@ -614,33 +640,36 @@ class PacmanGame extends BaseGame {
             // Trail
             enemy.trail.forEach(point => {
                 if (point.alpha > 0) {
-                    this.drawParticle(point.x, point.y, enemy.size * point.alpha * 0.5, 
-                        enemy.color.replace('rgb', 'rgba').replace(')', `, ${point.alpha * 0.3})`));
+                    let color = enemy.color;
+                    if (typeof color === 'string' && color.startsWith('rgb')) {
+                        color = color.replace('rgb', 'rgba').replace(')', `, ${point.alpha * 0.3})`);
+                    } else if (typeof color === 'string') {
+                        // Si c'est un code hexadécimal ou autre, appliquer une transparence simple
+                        color = color + (color.length === 7 ? '4D' : ''); // 30% alpha en hexadécimal
+                    } else {
+                        color = '#FF6B6B4D';
+                    }
+                    this.drawParticle(point.x, point.y, enemy.size * point.alpha * 0.5, color);
                 }
             });
 
             // Corps de l'ennemi
-            if (this.spritesLoaded && this.sprites.ghost && this.sprites.ghost.complete) {
-                // Utiliser le sprite
+            if (this.spritesLoaded && this.sprites.enemy && this.sprites.enemy.length > 0 && this.sprites.enemy[enemy.spriteIndex] && this.sprites.enemy[enemy.spriteIndex].complete) {
                 try {
                     this.ctx.save();
-                    
                     if (enemy.scared) {
-                        // Effet de peur
                         this.ctx.filter = enemy.scaredTimer % 20 < 10 ? 'hue-rotate(180deg)' : 'brightness(0.5)';
                     }
-                    
-                    this.ctx.drawImage(this.sprites.ghost, 
-                        enemy.x - enemy.size, enemy.y - enemy.size, 
-                        enemy.size * 2, enemy.size * 2);
-                        
+                    this.ctx.drawImage(
+                        this.sprites.enemy[enemy.spriteIndex],
+                        enemy.x - enemy.size, enemy.y - enemy.size,
+                        enemy.size * 2, enemy.size * 2
+                    );
                     this.ctx.restore();
                 } catch (e) {
-                    // Si erreur, utiliser le rendu par défaut
                     this.renderEnemyDefault(enemy);
                 }
             } else {
-                // Rendu par défaut
                 this.renderEnemyDefault(enemy);
             }
         });

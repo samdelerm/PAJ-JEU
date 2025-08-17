@@ -169,8 +169,8 @@ class VolleyballGame extends BaseGame {
 
         if (distance < this.ball.radius + 25) {
             // Déterminer la force selon si le joueur saute
-            const power = player.isJumping ? 10 : 7; // Puissances réduites
-            const upwardForce = player.isJumping ? -6 : -4; // Forces verticales réduites
+            const power = player.isJumping ? 6 : 4; // Puissances encore plus réduites
+            const upwardForce = player.isJumping ? -3.5 : -2; // Forces verticales encore plus réduites
             
             // Déterminer la direction selon le côté du joueur
             let targetDirection;
@@ -184,9 +184,9 @@ class VolleyballGame extends BaseGame {
             
             // Calculer l'angle pour envoyer la balle de l'autre côté
             const horizontalPower = power * targetDirection;
-            const verticalPower = upwardForce + Math.random() * -2; // Variation réduite
+            const verticalPower = upwardForce + Math.random() * -1; // Variation encore plus réduite
             
-            this.ball.vx = horizontalPower + Math.random() * 0.6 - 0.3; // Variation très réduite pour plus de contrôle
+            this.ball.vx = horizontalPower + Math.random() * 0.3 - 0.15; // Variation très faible
             this.ball.vy = verticalPower;
             
             this.createHitParticles(this.ball.x, this.ball.y, player.color);
