@@ -1,3 +1,34 @@
+/* Navigation bar and Home button styles */
+.navbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.3em 0.9em;
+    color: var(--neon-blue);
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.1em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.home-btn:hover, .home-btn:focus {
+    background: var(--primary-gradient);
+    color: #fff;
+    box-shadow: 0 0 12px var(--neon-blue);
+}
+.home-btn .home-icon {
+    font-size: 1.2em;
+    vertical-align: middle;
+}
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
 
 /* Variables CSS pour cohérence */
@@ -25,16 +56,14 @@ body {
     background: var(--dark-gradient);
     min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow-x: hidden;
-    position: relative;
-    color: white;
-}
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    color: white;
+}
 
 /* Animation de particules d'étoiles */
 .stars {
@@ -135,17 +164,16 @@ body {
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     max-width: 1000px;
     width: 95%;
-    margin: 20px;
+    margin: 20px auto 0 auto;
     padding: 40px;
     text-align: center;
     position: relative;
     animation: containerEntrance 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-    margin: 20px auto 0 auto;
     flex: 1 0 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
+}
 
 @keyframes containerEntrance {
     0% {
@@ -345,12 +373,12 @@ body {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
     margin-top: auto;
     width: 100%;
     text-align: center;
     background: transparent;
     flex-shrink: 0;
+}
 
 .game-footer p {
     color: rgba(255, 255, 255, 0.6);
