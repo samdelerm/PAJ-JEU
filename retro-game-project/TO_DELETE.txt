@@ -1,0 +1,3 @@
+Suppression des fichiers liés au karting :
+- js/levels/level4-kartracing.js
+- css/level4.css
