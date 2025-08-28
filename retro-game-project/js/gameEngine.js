@@ -459,20 +459,12 @@ class ControlManager {
                         <div class="dpad-center" id="joystick-knob"></div>
                     </div>
                 </div>
-                <div class="action-buttons">
-                    <button data-control="action" class="btn-action">
-                        <span class="btn-label">SAUT</span>
-                    </button>
-                </div>
-                <button id="back-to-menu" class="back-btn">
-                    <span class="back-icon">🏠</span>
-                </button>
             </div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', controlsHTML);
         this.addVirtualControlsCSS();
-        this.setupVirtualControlsEvents();
+        // Ne pas appeler setupVirtualControlsEvents car il n'y a plus de boutons à gérer
     }
 
     setupVirtualControlsEvents() {

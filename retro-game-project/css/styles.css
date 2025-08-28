@@ -15,6 +15,8 @@
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    pointer-events: auto !important;
+    touch-action: manipulation;
 }
 .fullscreen-btn:hover, .fullscreen-btn:focus {
     background: var(--primary-gradient);
@@ -30,6 +32,9 @@
     display: flex;
     align-items: center;
     margin-bottom: 10px;
+    pointer-events: auto !important;
+    z-index: 2002;
+    position: relative;
 }
 
 .home-btn {
@@ -46,6 +51,8 @@
     font-size: 1.1em;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    pointer-events: auto !important;
+    touch-action: manipulation;
 }
 .home-btn:hover, .home-btn:focus {
     background: var(--primary-gradient);
@@ -182,6 +189,7 @@ body {
 /* Container principal avec effet glass morphism */
 #game-container {
     background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-radius: 25px;
     border: 1px solid var(--glass-border);
@@ -234,8 +242,8 @@ body {
 
 .title-part {
     background: linear-gradient(45deg, #ffffff, var(--neon-blue));
-    background-clip: text;
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
     animation: titlePulse 2s ease-in-out infinite alternate;
@@ -243,8 +251,8 @@ body {
 
 .title-part.glow {
     background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
-    background-clip: text;
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(168, 85, 247, 0.7);
     animation-delay: 0.5s;
@@ -288,6 +296,7 @@ body {
 /* Boutons de niveau redessinés */
 .level-btn {
     background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(15px);
     backdrop-filter: blur(15px);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
