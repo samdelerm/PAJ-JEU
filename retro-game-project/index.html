@@ -18,21 +18,24 @@
 <body>
     <div class="stars"></div>
     <div class="floating-shapes"></div>
-    
+
+    <header class="game-header">
+        <nav class="navbar">
+            <a href="index.html" class="home-btn" title="Accueil">
+                <span class="home-icon">🏠</span> Home
+            </a>
+            <button id="fullscreen-btn" class="fullscreen-btn" title="Plein écran" type="button">
+                <span class="fullscreen-icon">⛶</span> Plein écran
+            </button>
+        </nav>
+        <h1 class="main-title">
+            <span class="title-part">Les Jeux du</span>
+            <span class="title-part glow">PAJ</span>
+        </h1>
+        <p class="subtitle">Collection de jeux classiques modernisés</p>
+    </header>
+
     <div id="game-container">
-        <header class="game-header">
-            <nav class="navbar">
-                <a href="index.html" class="home-btn" title="Accueil">
-                    <span class="home-icon">🏠</span> Home
-                </a>
-            </nav>
-            <h1 class="main-title">
-                <span class="title-part">Les Jeux du</span>
-                <span class="title-part glow">PAJ</span>
-            </h1>
-            <p class="subtitle">Collection de jeux classiques modernisés</p>
-        </header>
-        
         <main class="game-content">
             <div class="level-selection">
                 <div id="level-selection" class="level-grid">
@@ -43,7 +46,6 @@
                             <p>Contrôles tactiles & AZERTY</p>
                         </div>
                     </button>
-                    
                     <button id="level2" class="level-btn" data-level="2">
                         <div class="btn-icon">👻</div>
                         <div class="btn-content">
@@ -54,9 +56,7 @@
             </div>
             <p>Utilisez les contrôles AZERTY ou tactiles • Optimisé pour mobile et desktop</p>
         </main>
-        
         <footer>
-            
             <p>&copy; CDC DU BAZADAIS - Tous droits réservés</p>
         </footer>
     </div>
@@ -69,5 +69,38 @@
     <script src="js/levels/level2-pacman.js"></script>
 
     <script src="js/main.js"></script>
+    <script>
+    function toggleFullscreen() {
+        const elem = document.getElementById('game-container');
+        if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    // Support click & touch for fullscreen button
+    document.addEventListener('DOMContentLoaded', function() {
+        var fsBtn = document.getElementById('fullscreen-btn');
+        if (fsBtn) {
+            fsBtn.addEventListener('click', toggleFullscreen);
+            fsBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                toggleFullscreen();
+            });
+        }
+    });
+    </script>
 </body>
 </html>

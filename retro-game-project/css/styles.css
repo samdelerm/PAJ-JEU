@@ -1,3 +1,30 @@
+/* Fullscreen button styles */
+.fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.3em 0.9em;
+    color: var(--neon-blue);
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.1em;
+    margin-left: 1em;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.fullscreen-btn:hover, .fullscreen-btn:focus {
+    background: var(--primary-gradient);
+    color: #fff;
+    box-shadow: 0 0 12px var(--neon-blue);
+}
+.fullscreen-icon {
+    font-size: 1.2em;
+    vertical-align: middle;
+}
 /* Navigation bar and Home button styles */
 .navbar {
     display: flex;
