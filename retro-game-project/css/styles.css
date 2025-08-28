@@ -31,6 +31,10 @@ body {
     position: relative;
     color: white;
 }
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    height: 100vh;
 
 /* Animation de particules d'étoiles */
 .stars {
@@ -137,6 +141,11 @@ body {
     position: relative;
     animation: containerEntrance 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
+    margin: 20px auto 0 auto;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 
 @keyframes containerEntrance {
     0% {
@@ -337,6 +346,11 @@ body {
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+    margin-top: auto;
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    flex-shrink: 0;
 
 .game-footer p {
     color: rgba(255, 255, 255, 0.6);
@@ -356,7 +370,7 @@ body {
     }
     #game-container {
         width: 100vw;
-        min-height: 100vh;
+        min-height: 0;
         max-width: 100vw;
         margin: 0;
         padding: 0 0 60px 0;
@@ -364,6 +378,17 @@ body {
         box-shadow: none;
         border: none;
         background: var(--dark-gradient);
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+    .game-footer {
+        margin-top: auto;
+        width: 100vw;
+        left: 0;
+        right: 0;
+        position: relative;
+        background: transparent;
     }
     .game-header {
         margin-bottom: 20px;
