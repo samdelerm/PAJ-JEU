@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Les jeux du PAJ{% endblock %}</title>
+    <meta name="description" content="Collection de jeux rétro modernisés - Beach Volley, Pacman Camping, Tir à l'Arc, et Karting">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/level1.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/level2.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="floating-shapes"></div>
+    <header class="game-header">
+        <h1 class="main-title">
+            <span class="title-part">Les Jeux du</span>
+            <span class="title-part glow">PAJ</span>
+            <nav class="navbar">
+                <a href="/" class="home-btn" title="Accueil">
+                    <span class="home-icon">🏠</span> Home
+                </a>
+                <button id="fullscreen-btn" class="fullscreen-btn" title="Plein écran" type="button">
+                    <span class="fullscreen-icon">⛶</span> Plein écran
+                </button>
+            </nav>
+        </h1>
+        <p class="subtitle">Collection de jeux classiques modernisés</p>
+    </header>
+    {% block content %}{% endblock %}
+    <script>
+    function toggleFullscreen() {
+        const elem = document.getElementById('game-container');
+        if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var fsBtn = document.getElementById('fullscreen-btn');
+        if (fsBtn) {
+            fsBtn.addEventListener('click', toggleFullscreen);
+            fsBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                toggleFullscreen();
+            });
+        }
+    });
+    </script>
+</body>
+</html>

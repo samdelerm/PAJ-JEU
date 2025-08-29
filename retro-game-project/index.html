@@ -2,14 +2,71 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Les jeux du PAJ</title>
     <meta name="description" content="Collection de jeux rétro modernisés - Beach Volley, Pacman Camping, Tir à l'Arc, et Karting">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/level1.css">
-    <link rel="stylesheet" href="css/level2.css">
-    <link rel="stylesheet" href="css/level3.css">
-    <link rel="stylesheet" href="css/level4.css">
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/level1.css">
+        <link rel="stylesheet" href="css/level2.css">
+        <link rel="stylesheet" href="css/level3.css">
+        <link rel="stylesheet" href="css/level4.css">
+        <style>
+            html, body { margin:0; padding:0; font-family: 'Segoe UI', Arial, sans-serif; background: #222; color: #fff; }
+            .main-title { font-size: 2.5em; margin-bottom: 2vw; text-align: center; }
+            .subtitle { font-size: 1.2em; text-align: center; margin-bottom: 2vw; }
+            .game-header { padding: 4vw 2vw 2vw 2vw; }
+            .game-content { width: 100%; max-width: 900px; margin: 0 auto; padding: 2vw; }
+            .level-selection { width: 100%; display: flex; justify-content: center; }
+            .level-grid { display: flex; flex-wrap: wrap; gap: 4vw; justify-content: center; width: 100%; }
+            .level-btn { background: #fff2; border-radius: 18px; box-shadow: 0 2px 12px #0004; padding: 4vw 7vw; font-size: 1.3em; margin: 0.5em 0; transition: background 0.2s; border: none; color: #fff; display: flex; align-items: center; min-width: 120px; max-width: 260px; width: 100%; }
+            .level-btn:hover { background: #fff4; }
+            .btn-icon { font-size: 2.2em; margin-right: 1vw; }
+            .btn-content h3 { margin: 0 0 0.2em 0; font-size: 1.1em; }
+            .btn-content p { margin: 0; font-size: 0.9em; }
+                    .navbar { margin-top: 1vw; display: flex; gap: 0.5em; justify-content: center; }
+                    .home-btn, .fullscreen-btn {
+                        background: none;
+                        border: none;
+                        color: #fff;
+                        font-size: 1em;
+                        margin: 0 0.2em;
+                        cursor: pointer;
+                        padding: 0.3em 0.7em;
+                        border-radius: 10px;
+                        transition: background 0.2s, color 0.2s;
+                        min-width: 0;
+                        min-height: 0;
+                    }
+                    .home-btn:hover, .fullscreen-btn:hover {
+                        text-decoration: underline;
+                        background: #fff2;
+                        color: #ffe66d;
+                    }
+                    .home-icon, .fullscreen-icon {
+                        font-size: 1.1em;
+                        margin-right: 0.2em;
+                    }
+                    @media (max-width: 700px) {
+                        .home-btn, .fullscreen-btn { font-size: 0.85em; padding: 0.2em 0.5em; }
+                        .home-icon, .fullscreen-icon { font-size: 1em; }
+                    }
+                    @media (max-width: 500px) {
+                        .home-btn, .fullscreen-btn { font-size: 0.7em; padding: 0.1em 0.3em; }
+                        .home-icon, .fullscreen-icon { font-size: 0.9em; }
+                    }
+            @media (max-width: 700px) {
+                .main-title { font-size: 2em; }
+                .level-btn { font-size: 1.1em; padding: 5vw 4vw; }
+                .btn-icon { font-size: 1.7em; }
+            }
+            @media (max-width: 500px) {
+                .game-header { padding: 3vw 1vw; }
+                .main-title { font-size: 1.3em; }
+                .level-btn { font-size: 1em; padding: 6vw 2vw; }
+                .btn-icon { font-size: 1.2em; }
+            }
+            footer { margin-top: 20px; color: #fff; font-family: 'Press Start 2P', cursive; font-size: 1.1em; text-align: center; }
+        </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -53,9 +110,24 @@
                             <h3>Camping Pac-Man</h3>
                             <p>Aventure en forêt</p>
                         </div>
+                    </button>
+                    <button id="level3" class="level-btn" data-level="3">
+                        <div class="btn-icon">🏹</div>
+                        <div class="btn-content">
+                            <h3>Tir à l'arc</h3>
+                            <p>Précision et réflexes</p>
+                        </div>
+                    </button>
+                    <button id="level4" class="level-btn" data-level="4">
+                        <div class="btn-icon">🏎️</div>
+                        <div class="btn-content">
+                            <h3>Kart Racing</h3>
+                            <p>Course rétro</p>
+                        </div>
+                    </button>
                 </div>
             </div>
-            <p>Utilisez les contrôles AZERTY ou tactiles • Optimisé pour mobile et desktop</p>
+            <p style="text-align:center;">Utilisez les contrôles AZERTY ou tactiles • Optimisé pour mobile et desktop</p>
         </main>
         <footer>
             <p>&copy; CDC DU BAZADAIS - Tous droits réservés</p>

@@ -22,6 +22,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-flask:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask
+          # Ajoute ici d'autres dépendances si besoin
+      - name: Run app.py
+        run: python retro-game-project/version\ flask/app.py
   # Single deploy job since we're just deploying
   deploy:
     environment:
