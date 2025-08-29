@@ -37,7 +37,7 @@ jobs:
           pip install flask
           # Ajoute ici d'autres dépendances si besoin
       - name: Run app.py
-        run: python retro-game-project/version\ flask/app.py
+        run: python retro-game-project/version-flask/app.py
   # Single deploy job since we're just deploying
   deploy:
     environment:
